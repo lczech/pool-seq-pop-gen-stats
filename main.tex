@@ -84,6 +84,11 @@
 \usepackage{threeparttable}
 % \usepackage[flushleft]{threeparttable}
 
+% Sections with dots in TOC
+% https://tex.stackexchange.com/a/53901/171851
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+
 % LEFT-ALIGN THE AUTHOR LIST
 % Overleaf syntax highlighting gets messed up by this, but it works.
 % Commented out now to not mess with overleaf for now.
