@@ -1,4 +1,4 @@
-# Pool-Sequencing corrections for population genetic statistics
+## Pool-Sequencing corrections for population genetic statistics
 
 This repository contains our equations and simulations for Pool-Sequencing corrections for population genetic statistics.
 
