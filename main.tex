@@ -121,8 +121,8 @@
 % and comment out the respective other line.
 % LaTeX is so easy ;-)
 
-\newcommand\todo[1]{{\stepcounter{todo}\color{purple}{TODO \arabic{todo}: #1}}}
-% \newcommand\todo[1]{}
+% \newcommand\todo[1]{{\stepcounter{todo}\color{purple}{TODO \arabic{todo}: #1}}}
+\newcommand\todo[1]{}
 
 % Same for "popoolissue", which we use to annotate our questions for the popoolation team
 % \newcommand\popoolissue[1]{{\stepcounter{popoolissue}\color{purple}{ITEM \arabic{popoolissue}: #1}}}
@@ -240,7 +240,9 @@
 \textsuperscript{b}{Department of Genetics, Stanford University, Stanford, USA.\\}
 \textsuperscript{c}{Department of Biology, Stanford University, Stanford, USA.\\}
 \textsuperscript{d}{Department of Global Ecology, Carnegie Institution for Science, Stanford, USA.\\}
-\textsuperscript{*}{To whom correspondence should be addressed: \href{mailto:lczech@carnegiescience.edu}{\color{black}{lczech@carnegiescience.edu}} and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalonso@gmail.com}}}
+\textsuperscript{*}{To whom correspondence should be addressed: \href{mailto:lczech@carnegiescience.edu}{\color{black}{lczech@carnegiescience.edu}},
+% \href{mailto:jspence@stanford.edu}{\color{black}{jspence@stanford.edu}}, 
+and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalonso@gmail.com}}}
 
 % Custom title, as the template is a bit broken...
 % \makeatletter
@@ -256,7 +258,7 @@
 
 % \vspace*{0.6em}
 % \\
-\textbf{Version: 2022-06-02} \\
+\textbf{Version: 2022-06-05} \\
 See \url{https://github.com/lczech/pool-seq-pop-gen-stats} for the latest version of this document.
 
 This document describes our assessment of pool-sequencing-specific equations for population genetic measures of diversity (such as $\theta_\pi$, $\theta_\text{Watterson}$, Tajima's $D$), and differentiation (such as $\mathfst$).
@@ -303,7 +305,7 @@ $\samplesize$ :
 Pool size, provided by the user. This is the number of individuals that were pooled together for sequencing.
 
 $\coverage$ :
-Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?}
+Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?  Yes and no -- throughout we assume that it is not random, which is fine -- the randomness in the coverage is ancillary (\url{https://en.wikipedia.org/wiki/Ancillary_statistic}) to the estimation of the frequencies, and so in some sense it's uninteresting / unimportant whether it's random or not.}
 
 $b$ :
 Minimum allele count, provided by the user.
@@ -420,7 +422,7 @@ First, we derive estimators for the pairwise heterozygosity, $\theta_\pi$, also 
 
 If we were to sequence individuals, it would be straightforward to derive unbiased estimators for $\theta_\pi$, but instead we obtain a pool of reads, which introduces two major issues.  The first is that we no longer have access to individuals.  If we had sequenced individuals, we could estimate $\theta_\pi$ by looking at two individuals and asking if they have different alleles at a position, but in pool sequencing, we can only look at two different reads and ask if they have different alleles.  The issue is that we cannot know whether those reads were from the same individual or from different individuals, so a naive estimator of $\theta_\pi$ that just looks at pairwise differences between reads will be biased because in some fraction of times those reads will have come from the same individual, and hence must have the same allele (ignoring sequencing error).  The second major issue is that positions where only a small number of reads have a particular allele could be an artifact of sequencing error.  As such, PoPoolation restricts to sites where there are either $0$ or at least $b$ reads supporting each allele.
 
-Below we derive PoPoolation's estimator of pairwise heterozygosity, $\thetapi$, which addresses both of the issues listed above.  Dealing with the bias from pool-sequencing is straightforward.  Restricting to positions where there are at least $b$ reads with the minor allele is more complex, however, and requires additional assumptions that will almost certainly not be met in practice.  In particular, the $\thetapi$ estimator crucially relies on the assumption that the population is evolving neutrally and is at equilibrium -- in technical terms, the derivation relies on the sample frequency spectrum to be proportional to $1/k$, which is to say that the probability that $k$ out of $\samplesize$ individuals have the derived allele at a segregating site has probability proportional to $1/k$.  In practice, natural selection, gene flow, or fluctuations in effective population size can all cause deviations from this assumption, and these deviations will result in $\thetapi$ being a biased estimator of $\theta_\pi$.
+Below we derive PoPoolation's estimator of pairwise heterozygosity, $\thetapi$, which addresses both of the issues listed above.  Dealing with the bias from pool-sequencing is straightforward.  Restricting to positions where there are at least $b$ reads with the minor allele is more complex, however, and requires additional assumptions that will almost certainly not be met in practice.  In particular, the $\thetapi$ estimator crucially relies on the assumption that the population is evolving neutrally and is at equilibrium -- in technical terms, the derivation relies on the sample frequency spectrum being proportional to $1/k$, which is to say that the probability that $k$ out of $\samplesize$ individuals have the derived allele at a segregating site has probability proportional to $1/k$.  In practice, natural selection, gene flow, or fluctuations in effective population size can all cause deviations from this assumption, and these deviations will result in $\thetapi$ being a biased estimator of $\theta_\pi$.
 
 % ------------------------------------------------------------------------------------------------------
 %          Unbiased Pool-seq estimator
@@ -462,12 +464,12 @@ Note however that the computation is still only conducted on biallelic sites, as
 \subsubsection*{Bias of $\thetapi^{\samplesize\to\infty}$ when restricting to sites with at least $b$ minor allele reads}
 \label{supp:sec:ThetaPi:sub:PoolSequencing:sub:ExpectedValue}
 
-Other than the bias from the finite pool size, $\thetapi^{\samplesize\to\infty}$ is a reasonable estimator of the pairwise heterozygosity at a given site.  To obtain an overall estimate of $\theta_\pi$, we could average $\thetapi^{\samplesize\to\infty}$ across all sites.  PoPoolation seeks to avoid including sites that appear to be segregating solely because of sequencing error, however, which adds a complication.  We expect that sequencing errors should be rare, and so it would be extremely unlikely to see more than $b$ reads supporting a particular allele solely due to sequencing error.  As such, we can remove all sites with fewer than $b$ reads supporting the minor allele.  This is problematic, however, and biases the estimator -- while removing such sites certainly removes most or all sites that are segregating solely due to sequencing error, it also removes a large number of sites where the mutation just happens to be at low frequency.
+Other than the bias from the finite pool size, $\thetapi^{\samplesize\to\infty}$ is a reasonable estimator of the pairwise heterozygosity at a given site.  To obtain an overall estimate of $\theta_\pi$, we could average $\thetapi^{\samplesize\to\infty}$ across all sites.  PoPoolation seeks to avoid including sites that appear to be segregating solely because of sequencing error, however, which adds a complication.  We expect that sequencing errors should be rare, and so it would be extremely unlikely to see $b$ or more reads supporting a particular allele solely due to sequencing error.  As such, we can remove all sites with fewer than $b$ reads supporting the minor allele.  This is problematic, however, and biases the estimator -- while removing such sites certainly removes most or all sites that are segregating solely due to sequencing error, it also removes a large number of sites where the mutation just happens to be at low frequency.
 
-The approach that PoPoolation takes is to assume neutrality and an equilibrium demography (all variation is neutral, and the population is of constant size and in mutation-drift equilibrium), calculate the bias of $\thetapi^{\samplesize\to\infty}$, and introduce a term to correct for that bias.  Despite using sequencing error as a motivation, PoPoolation ignores sequencing error in the following derivation.  The derivation will assume biallelic sites, and all expectations in this section will be with respect to both the randomness in the pool-seq experiment as well as the randomness in the evolutionary process.  To begin, we compute the expectation of $\thetapi^{\samplesize\to\infty}$ when restricted to only sites where there are either $0$ or at least $b$ reads supporting the minor allele.  Since we are assuming that we are only looking at biallelic sites, we will use $M$ to denote the number of reads supporting the derived allele.  Note that if $M$ is zero or $\coverage$, then $\thetapi^{\samplesize\to\infty} = 0$. Letting $\mathcal{E}_b$ be the event that either $0$ or at least $b$ reads support the minor allele, we see
+The approach that PoPoolation takes is to assume neutrality and an equilibrium demography (all variation is neutral, and the population is of constant size and in mutation-drift equilibrium), calculate the bias of $\thetapi^{\samplesize\to\infty}$, and introduce a term to correct for that bias.  Despite using sequencing error as a motivation, PoPoolation ignores sequencing error in the following derivation.  The derivation will assume biallelic sites, and all expectations in this section will be with respect to both the randomness in the pool-seq experiment as well as the randomness in the evolutionary process.  To begin, we compute the expectation of $\thetapi^{\samplesize\to\infty}$ when we treat sites with fewer than $b$ reads supporting the minor allele as not contributing to $\thetapi^{\samplesize\to\infty}$.  Since we are assuming that we are only looking at biallelic sites, we will use $M$ to denote the number of reads supporting the derived allele.  Letting $\mathcal{E}_b$ be the event that at least $b$ reads support the minor allele, we see
 %
 \begin{align}
-\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid \mathcal{E}_b\right] &= \sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}(M = m)\\
+\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right] &= \sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}(M = m)\\
 &= \mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)\\
 &=  2\mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
 \label{eq:ExpectationThetaPi}
@@ -499,11 +501,11 @@ $\mathbb{P}\left(M = b | \text{ Site is a SNP }\right)$ is the probability of ob
 %
 \begin{align}
     \label{eq:Pmcn}
-    \mathbb{P}\left(M = m \mid \text{site is a SNP}\right) &= \sum_{k=1}^{n-1} \mathbb{P}\left(M=m \mid \tilde{M} = k\right)\mathbb{P} \left( \tilde{M} = k\right)\\
+    \mathbb{P}\left(M = m \mid \text{site is a SNP}\right) &= \sum_{k=1}^{n-1} \mathbb{P}\left(M=m \mid \tilde{M} = k\right)\mathbb{P} \left( \tilde{M} = k \mid \text{site is a SNP}\right)\\
     %&= \sum_{k=1}^{n-1} P(m|C,n,k) \frac{1/k}{\sum_{j=1}^{n-1} 1/j} \\
     &= \frac{1}{a_1(n-1)}  \sum_{k=1}^{n-1} \frac{1}{k}  \mathbb{P}\left(M=m \mid\tilde{M} = k\right)
 \end{align}
-where the second line follows from another classic result in coalescent theory that (assuming neutrality, equilibrium, and that $\theta_\pi$ is small) the probability that $k$ individuals in a pool of size $\samplesize$ is $\frac{1}{ka_1(n-1)}$.
+where the second line follows from another classic result in coalescent theory that (assuming neutrality, equilibrium, and that $\theta_\pi$ is small) the probability that $k$ individuals in a pool of size $\samplesize$ have the derived allele given that a site is s SNP is $\frac{1}{ka_1(n-1)}$.
 
 Finally, $ \mathbb{P}\left(M=b \mid \tilde{M} = k\right)$ is the probability of having $m$ reads support the derived allele when $k$ individuals in the pool have the derived allele.  From our binomial sampling model of pool sequencing, this is:
 
@@ -523,10 +525,10 @@ Starting from \eqnref{eq:ExpectationThetaPi}, we can now put this together:
 %
 \begin{align}
 \nonumber
-\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid \mathcal{E}_b\right]  &=2\theta_\pi \sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right]  &=2\theta_\pi \sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 \end{align}
 
-This shows that if we use our estimator $\thetapi^{\samplesize\to\infty}$ but only apply it to sites where the minor allele is supported by at least $b$ reads, then estimate will be biased by a factor of
+This shows that if we use our estimator $\thetapi^{\samplesize\to\infty}$ but treat as zero sites where the minor allele is not supported by at least $b$ reads a, then the estimate will be biased by a factor of
 \[
 2\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 \]
@@ -543,26 +545,23 @@ which we will now use to elimiate said bias.
 \subsubsection*{Unbiased estimate of $\theta_\pi$ when restricting to sites with at least $b$ minor allele reads}
 \label{supp:sec:ThetaPi:sub:PoolSequencing:sub:FinalApprox}
 
-Based on the previous section, we can construct an unbiased estimator for $\theta_\pi$ when restricting to sites with at least $b$ reads supporting the minor allele, which we denote by $\widehat{\theta}_{\pi,\text{pool}}$.  Let $\mathcal{S}_b$ be the set of sites where at least $b$ reads support the minor allele, and let $\thetapi^{\samplesize\to\infty}(\ell)$ be the above estimator evaluated at the $\ell^\text{th}$ site (where above we suppressed the dependence on site because we only considered one site at a time).  We then define  $\widehat{\theta}_{\pi,\text{pool}}$ as
+Based on the previous section, we can construct an unbiased estimator for $\theta_\pi$ when restricting to sites with at least $b$ reads supporting the minor allele, which we denote by $\widehat{\theta}_{\pi,\text{pool}}$.  Let $\mathcal{S}_{bc}$ be the set of sites where the coverage is $c$, and at least $b$ reads support the minor allele, and let $\thetapi^{\samplesize\to\infty}(\ell)$ be the above estimator evaluated at the $\ell^\text{th}$ site (where above we suppressed the dependence on site because we only considered one site at a time).  Finally, let $\mathcal{C}$ denote the set of distinct observed coverage levels across the genome.  We then define  $\widehat{\theta}_{\pi,\text{pool}}$ as
 %
 \begin{align}
     \label{eq:ThetaPiPoolEstimate}
-     \widehat{\theta}_{\pi,\text{pool}} &:=
+     \widehat{\theta}_{\pi,\text{pool}} &:= \frac{1}{\# \text{sites}} \cdot \sum_{c\in \mathcal{C}}
     \frac{
-       \frac{1}{|\mathcal{S}_b|}\sum_{\ell \in \mathcal{S}_b} \thetapi^{\samplesize\to\infty}(\ell)
+       \sum_{\ell \in \mathcal{S}_{bc}} \thetapi^{\samplesize\to\infty}(\ell)
     }{
         2\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 %         \sum_{k=1}^{n-1} \frac{1}{k}  {C \choose m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{C-m}
     }
 \end{align}
 %
-Note that the denominator only depends on the total coverage $\coverage$ and the pool size $\samplesize$,
-and hence only needs to be computed once per coverage level, yielding a significant computational speedup.
-
-\todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the coverage $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?}
+\todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the coverage $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over coverage levels and debias each coverage level appropriately.}
 
 This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{pi},
-and implemented in our \toolname{grenedalf} as well.
+and implemented in our \toolname{grenedalf} as well. Note that the denominator only depends on the total coverage $\coverage$ and the pool size $\samplesize$, and hence only needs to be computed once per coverage level, yielding a significant computational speedup.
 
 
 % \begin{align}
@@ -606,7 +605,9 @@ and implemented in our \toolname{grenedalf} as well.
 \section{Watterson's Theta \texorpdfstring{$\widehat{\theta}_w$}{}}
 \label{supp:sec:ThetaWatterson}
 
-\todo{this section name has a hat, while the previous theta pi section name does not. Jeff, which one do you prefer?}
+\todo{this section name has a hat, while the previous theta pi section name does not. Jeff, which one do you prefer? JPS: I prefer Hat for this section because Watterson's is explicitly an estimator, whereas $\theta_\pi$ as we defined it -- is a population-level parameter (i.e., the pairwise heterozygosity \emph{in the population})}
+
+\todo{JPS:  Hey Lucas -- I think that all of these should be divided by the number of SNPs, otherwise it's an estimate of the \emph{total} rate of mutation across all sites.  Just want to check that that's what's in the code...  --> it is! well, both, the absolute and relative value are printed. thanks for checking! dividing by the number of sites with sufficient coverage (according to the min count and min cov settings) to get the to relative one.}
 
 % ------------------------------------------------------------------------------------------------------
 %          Theta Watterson
@@ -617,13 +618,13 @@ and implemented in our \toolname{grenedalf} as well.
 
 Under neutrality, and equilibrium demography $\theta_\pi$ is equal to $4N_e\mu =: \theta$ -- four times the effective population size times the per-generation mutation rate, and hence, the estimator in the previous section can be used as an estimate of the population-scaled mutation rate.  An alternative estimate of the mutation rate is Watterson's theta, $\widehat{\theta}_w$, which is based on the number of segregating sites instead of the pairwise heterozygosity.  If we had sequenced individuals, the usual definition of $\widehat{\theta}_w$ is (e.g., Equation (3.5) of \citeay{Hahn2018}):
 \[
-\widehat{\theta}_w := \frac{S}{a_1(n-1)}
+\widehat{\theta}_w := \frac{S}{\text{\# sites} \cdot a_1(n-1) }
 \]
-\todo{pretty sure that the $n$ in the denominator above is wrong, as $n$ is the pool size, but it should be coverage, or not? Jeff, can you please check?}
-where $S$ is the number of segregating sites.  In the pool sequencing case we might hope to just count up the number of sites that have more than one allele to use in place of $S$, but sequencing error is deeply problematic here.  Any place where any read has a sequencing error will look like a segregating site, vastly inflating our estimate of the true number of sites that are segregating in our sample.  PoPoolation therefore follows a similar approach as in the case of the pairwise heterozygosity, by only considering a site to be segregating if at least $b$ reads support each of two alleles.  Again, this restriction introduces bias because it will miss many sites where one of the alleles really is at a low frequency -- but still segregating -- in the pool.  As before, we will compute this bias and then correct for it, again assuming neutrality, and equilibrium demography, and that the mutation rate is small enough to only focus on biallelic sites.
+\todo{pretty sure that the $n$ in the denominator above is wrong, as $n$ is the pool size, but it should be coverage, or not? Jeff, can you please check?  JPS: this denominator is right -- the first paragraph up to here is talking about what we would do if we had sequenced \emph{individuals}}
+where $S$ is the number of segregating sites. In the pool sequencing case we might hope to just count up the number of sites that have more than one allele to use in place of $S$, but sequencing error is deeply problematic here.  Any place where any read has a sequencing error will look like a segregating site, vastly inflating our estimate of the true number of sites that are segregating in our sample.  PoPoolation therefore follows a similar approach as in the case of the pairwise heterozygosity, by only considering a site to be segregating if at least $b$ reads support each of two alleles.  Again, this restriction introduces bias because it will miss many sites where one of the alleles really is at a low frequency -- but still segregating -- in the pool.  As before, we will compute this bias and then correct for it, again assuming neutrality, and equilibrium demography, and that the mutation rate is small enough to only focus on biallelic sites.
 
 
-Formally, let $M_\ell$ be the number of reads supporting the derived allele site $\ell$, and define
+Formally, let $M_\ell$ be the number of reads supporting the derived allele at site $\ell$, and define
 \begin{align}
 %     \nonumber
     S_b(\ell) :=
@@ -637,9 +638,9 @@ Formally, let $M_\ell$ be the number of reads supporting the derived allele site
 
 We then define our naive pool-seq analog of Watterson's $\theta$ as
 \[
-\widehat{\theta}_w :=\frac{1}{a_1(\samplesize-1)}\sum_{\ell} S_b(\ell)
+\widehat{\theta}_w :=\frac{1}{\text{\# sites} \cdot a_1(\samplesize-1)}\sum_{\ell} S_b(\ell)
 \]
-\todo{again, sure that this is $n$ here? same below again.}
+\todo{again, sure that this is $n$ here? same below again. JPS: Yeah -- the $a_1(n-1)$ comes from Coalescent considerations on the $n$ haplotypes in the same (i.e., the sample size).  It's exactly the same $a_1(n-1)$ that shows up in eq. (9)}
 
 Reasoning the same as above, we get the expected value of $\widehat{\theta}_w$ as
 %
@@ -652,23 +653,23 @@ Reasoning the same as above, we get the expected value of $\widehat{\theta}_w$ a
     \intertext{
         with the two probability terms again as in \eqnref{eq:PSNP} and \eqnref{eq:Pmcn}, thus leading to
     }
-    \label{eq:ExpecationThetaW}
-    &= \theta \sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+    \label{eq:ExpectationThetaW}
+    &= \theta\sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 \end{align}
 %
-This immediately suggests the following unbiased estimator, which we denote $\widehat{\theta}_{w, \text{pool}}$:
+To accommodate different coverage levels throughout the genome, denote the set of different coverage levels as $\mathcal{C}$, and the set of sites with coverage $c$ as $\mathcal{S}_c$. Equation~\ref{eq:ExpectationThetaW} immediately suggests the following unbiased estimator, which we denote $\widehat{\theta}_{w, \text{pool}}$:
 %
 \begin{align}
     \label{eq:CorrectedThetaEstimate}
-    \widehat{\theta}_{w, \text{pool}} &:=
+    \widehat{\theta}_{w, \text{pool}} &:= \frac{1}{\text{\# sites} \cdot a_1(n-1)}\sum_{c \in \mathcal{C}}
     \frac{
-        \widehat{\theta}_w
+        \sum_{\ell \in \mathcal{S}_c} S_b(\ell)
     }{
          \sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
     }
 \end{align}
 %
-\todo{I don't think the above is correct. it is using $\widehat{\theta}_w$ in the numerator, which contains the additional $a_1$ term that is not meant to be there, as it cancels out. Jeff, can you check please?}
+\todo{I don't think the above is correct. it is using $\widehat{\theta}_w$ in the numerator, which contains the additional $a_1$ term that is not meant to be there, as it cancels out. Jeff, can you check please?  JPS: I fixed to deal with the coverage issue as above.}
 
 As before, the denominator only depends on the coverage $\coverage$,
 and hence only needs to be computed once per coverage level that is present in the data.
@@ -740,28 +741,28 @@ Then, following PoPoolation, we compute the variance as:
     \text{Var}( \widehat{d}_\text{pool} ) &= \mathbb{E}( \widehat{d}_\text{pool}^2 )
     \\
     \nonumber
-    &= \mathbb{P}\left(\text{Site is a SNP}\right) \sum_{m=b}^{C-b} \mathbb{E}\left[\widehat{d}_{\text{pool}}^2 \mid M=m \right] \cdot \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
+    &= \mathbb{P}\left(\text{Site is a SNP}\right) \sum_{m=b}^{c-b} \mathbb{E}\left[\widehat{d}_{\text{pool}}^2 \mid M=m \right] \cdot \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
     \intertext{which can be resolved using equations \eqnref{eq:PSNP} and \eqnref{eq:Pmcn} from previous sections:}
     \label{eq:VarDPool}
-    &= \theta \sum_{m=b}^{C-b}  \mathbb{E}\left[\left(\widehat{\theta}_{\pi,\text{pool}} -  \widehat{\theta}_{w,\text{pool}} \right)^2 \Big\vert\ M=m\right]    \cdot \sum_{k=1}^{n-1} \frac{1}{k}  \binom{C}{m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{C-m}
+    &= \theta \sum_{m=b}^{c-b}  \mathbb{E}\left[\left(\widehat{\theta}_{\pi,\text{pool}} -  \widehat{\theta}_{w,\text{pool}} \right)^2 \Big\vert\ M=m\right]    \cdot \sum_{k=1}^{n-1} \frac{1}{k}  \binom{c}{m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{c-m}
 \end{align}
 %
 Both $\widehat{\theta}_{\pi,\text{pool}}$ and $\widehat{\theta}_{w, \text{pool}}$ are completely determined once we fix $M$ to be $m$, so the only unknown quantity is $\theta$.
 PoPoolation suggests using $\widehat{\theta}_{\pi,\text{pool}}$
 on the same window on which we are computing $D_\text{pool}$, as our estimate of $\theta$ to obtain a plug-in estimate of the variance:
 \[
-\widehat{\text{Var}}( \widehat{d}_\text{pool} )  := \widehat{\theta}_{\pi, \text{pool}} \sum_{m=b}^{C-b} \mathbb{E}\left[\left(\widehat{\theta}_{\pi,\text{pool}} -  \widehat{\theta}_{w,\text{pool}} \right)^2 \Big\vert\ M=m\right]
-    \cdot \sum_{k=1}^{n-1} \frac{1}{k}  \binom{C}{m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{C-m}
+\widehat{\text{Var}}( \widehat{d}_\text{pool} )  := \widehat{\theta}_{\pi, \text{pool}} \sum_{m=b}^{c-b} \mathbb{E}\left[\left(\widehat{\theta}_{\pi,\text{pool}} -  \widehat{\theta}_{w,\text{pool}} \right)^2 \Big\vert\ M=m\right]
+    \cdot \sum_{k=1}^{n-1} \frac{1}{k}  \binom{c}{m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{c-m}
 \]
 
 This assumes that all individuals contribute the same number of reads to the pool.
 As stated above, both $\widehat{\theta}_{\pi,\text{pool}}$ and $\widehat{\theta}_{w, \text{pool}}$ are completely determined once we fix $M$ to be $m$, so these values can be pre-computed and stored to achieve a computational speedup.
 
 The first summation in \eqnref{eq:VarDPool} involves computing $\widehat{\theta}_{\pi,\text{pool}}$ and 
-$\widehat{\theta}_{w,\text{pool}}$ repeatedly $C-2b$ many times, 
+$\widehat{\theta}_{w,\text{pool}}$ repeatedly $c-2b$ many times, 
 with each of these computations involving to compute their respective denominators.
 % as shown in \eqnref{eq:ThetaPiPool} and \eqnref{eq:ThetaWPool}.
-However, as $C$ remains constant throughout this computation, these denominators (the correction terms)
+However, as $c$ remains constant throughout this computation, these denominators (the correction terms)
 are identical, so that we only need to compute them once, to gain a $\approx C$-fold speedup.
 
 At this point, the PoPoolation equation document also introduces an approach to compute Tajima's D based on the above in windows.
@@ -916,7 +917,7 @@ yielding our closed form expression:
     \tilde{n} = n \left( 1 - \left( \frac{n-1}{n} \right)^\coverage \right)
 \end{align}
 %
-This is equation that we compute in our implementation to arrive at $\tilde{n}$ for a given coverage $\coverage$ and poolsize $n$.
+This is the equation that we compute in our implementation to arrive at $\tilde{n}$ for a given coverage $\coverage$ and poolsize $n$.
 
 \todo{UNRESOLVED ISSUE: This is computed using the coverage $\coverage$ in the above equations (and in the PoPoolation equations), but seems to be called with $b$ (min coverage) in their code (and in mine). Jeff, is that yet another bug (number three then, on top of the two already mentioned two sections below) that they introduced in their code? it seems weird to compute this based on the min coverage, than the actual coverage at the site.  JPS: I'm actually not totally sure what the PoPoolation people are doing here.  I guess they're plugging an estimate of $n$ into the f alpha and beta, which is fine, but could be biased.  My guess is that you would want to use $\coverage$ and not $b$, but as I said I'm not totally sure what they're doing here.}
 
@@ -951,7 +952,7 @@ following PoPoolation and \citeay{Achaz2008}.
 This requires $b=2$; furthermore, PoPoolation suggests using ``not too small'' windows.
 We are using the size $|W|$ of the window here, that is, the total length along the window in bases, which is typically much larger than the number of SNPs in the window. 
 
-\todo{UNRESOLVED ISSUE: That is what i get from their code. Is that the correct term to use here? should it be the number of SNPs in the window instead?  JPS: I have no idea.  I would need to go through the Achaz paper in some detail to figure it out.}
+\todo{UNRESOLVED ISSUE: That is what i get from their code. Is that the correct term to use here? should it be the number of SNPs in the window instead?  JPS: I have no idea.  I would need to go through the Achaz paper in some detail to figure it out.  My guess is number of SNPs is right.}
 
 The above is the estimator as implemented in \toolname{PoPoolation} and in our implementation.
 
@@ -1257,7 +1258,7 @@ Finally, the estimate of \fst is computed as:
     \widehat{\text{F}}_\text{ST}^\text{Kofler} &= \frac{ \widehat{\pi}_{W(T)}^\text{Kofler} - \frac{1}{2} \left(     \widehat{\pi}_{W(1)}^\text{Kofler} +     \widehat{\pi}_{W(2)}^\text{Kofler}  \right)}{ \widehat{\pi}_{W(T)}^\text{Kofler}}
 \end{align}
 
-Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{within}$.  There are a two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator -- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different coverages and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum coverage and the minimum sample size for both.  This again will result in an upward bias for the sample with higher coverage and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{F}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
+Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{total}$.  There are a two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator -- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different coverages and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum coverage and the minimum sample size for both.  This again will result in an upward bias for the sample with higher coverage and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{F}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
 
 % Moi's rendering of the equations. Keeping it here for reference, in case it's later needed.
 
@@ -1432,12 +1433,11 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 
 We find that the estimators we derived in Section~\ref{supp:sec:FST:sub:EstimatorFST} are approximately unbiased across all regimes except for the \texttt{msprime} simulations with the highest sequencing error rate, see \figref{fig:UnbiasedHudson} and \figref{fig:UnbiasedNei}.
 
-In contrast, in \figref{fig:Kofler} we find that the Kofler estimator of $\neifst$ is highly biased in a way that depends on pool size and average read depth.  This makes sense because as discussed above, the Kofler estimate of $\pi_\text{between}$ includes a Bessel correction when it should not.  That Bessel correction contains terms that depend on both the pool size and the the read depth, and
-\todo{Jeff, there seems to be an end missing for this sentence}
+In contrast, in \figref{fig:Kofler} we find that the Kofler estimator of $\neifst$ is highly biased in a way that depends on pool size and average read depth.  This makes sense because as discussed above, the Kofler estimate of $\pi_\text{between}$ includes a Bessel correction when it should not.  That Bessel correction contains terms that depend on both the pool size and the the read depth, explaining the pool size and sample size-dependent bias.
 
 Similarly, in \figref{fig:Karlsson} we find that the Karlsson estimator of $\hudsonfst$ is highly biased for small pool sizes, but otherwise performs well (again except for the case of high sequencing error).  Again, this makes sense as the Karlsson estimator implicitly assumes an infinite pool size, and so will be biased for small pool sizes.
 
-For the \texttt{msprime} simulations with the highest sequencing error rate, we see that all methods severely underestimate \fst.  It makes sense that the methods should be biased as none of the estimators account for sequencing error. In the \texttt{msprime} simulations, most sites are not segregating in the population.  Sites that are not segregating do not contribute to the true value of \fst{} -- they act as a $0$ added to each of the $\pi$'s. Calling the rate of sequencing error~$\epsilon$, all of the above estimators add something $\approx \epsilon$ over the number of sites to each of the $\widehat{\pi}$'s in expectation.  As a result, for $\neiestimator := 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$, for example, we add something on the order of $\epsilon$ to our estimates of $\widehat{\pi}_\text{within}$ and $\widehat{\pi}_\text{total}$.  This inflates $\frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$ causing us to underestimate $\neifst$.  A similar phenomenon occurs for $\hudsonestimator$, as well as the other estimators.  To see that invariant sites add $\approx\epsilon$ over the total number of sites to any of the $\widehat{\pi}$'s, consider an asymptotic regime where both the read depth and the pool size are large.  In this regime, if there were no sequencer error, the empirical frequency of each allele across reads is a very accurate estimate of the the true population allele frequency.  In particular, for invariant sites, all of the reads will show the ``0'' allele across both populations.  If we add sequencing error, then approximately $\epsilon$ proportion of the reads will show the ``1'' allele in each population.  Our estimators ignore sequencing error, and so in this case, it would look like both populations have the ``1'' allele at frequency $\epsilon$.  Naively plugging these frequencies into $\pi_\text{within}$, $\pi_\text{between}$, or $\pi_\text{total}$ we obtain $\epsilon(1-\epsilon)\approx \epsilon$.  In practice, at invariant sites, the different estimators would include various Bessel corrections, but the intuition holds, and these sites contribute approximately $\epsilon$ to the overall estimates of the different $\pi$'s.  As a result, if $\epsilon$ is comparable to or larger than any of the $\pi$'s, then any of the \fst estimates will be significantly biased.  Indeed, in the \texttt{msprime} simulations, we would expect $\pi_\text{within}$ to be approximately $\theta$ which is $0.001$, matching the highest sequencing error simulations, and explaining the apparent bias.  In contrast, in the ``simple'' simulations, $\pi_\text{within}$ is approximately $0.03$ which is an order of magnitude larger than the highest sequencing error simulated.
+For the \texttt{msprime} simulations with the highest sequencing error rate, we see that all methods severely underestimate \fst.  It makes sense that the methods should be biased as none of the estimators account for sequencing error. In the \texttt{msprime} simulations, most sites are not segregating in the population.  Sites that are not segregating do not contribute to the true value of \fst{} -- they act as a $0$ added to each of the $\pi$'s. Calling the rate of sequencing error~$\epsilon$, all of the above estimators add something $\approx \epsilon$ over the number of sites to each of the $\widehat{\pi}$'s in expectation.  As a result, for $\neiestimator := 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$, for example, we add something on the order of $\epsilon$ to our estimates of $\widehat{\pi}_\text{within}$ and $\widehat{\pi}_\text{total}$.  This inflates $\frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$ causing us to underestimate $\neifst$.  A similar phenomenon occurs for $\hudsonestimator$, as well as the other estimators.  To see that invariant sites add $\approx\epsilon$ over the total number of sites to any of the $\widehat{\pi}$'s, consider an asymptotic regime where both the read depth and the pool size are large.  In this regime, if there were no sequencer error, the empirical frequency of each allele across reads is a very accurate estimate of the the true population allele frequency.  In particular, for invariant sites, all of the reads will show the ``0'' allele across both populations.  If we add sequencing error, then approximately $\epsilon$ proportion of the reads will show the ``1'' allele in each population.  Our estimators ignore sequencing error, and so in this case, it would look like both populations have the ``1'' allele at frequency $\epsilon$.  Naively plugging these frequencies into $\pi_\text{within}$, $\pi_\text{between}$, or $\pi_\text{total}$ we obtain $\epsilon(1-\epsilon)\approx \epsilon$.  In practice, at invariant sites, the different estimators would include various Bessel corrections, but the intuition holds, and these sites contribute approximately $\epsilon$ to the overall estimates of the different $\pi$'s.  As a result, if $\epsilon$ is comparable to or larger than any of the $\pi$'s, then any of the  estimators will be significantly biased.  Indeed, in the \texttt{msprime} simulations, we would expect $\pi_\text{within}$ to be approximately $\theta$ which is $0.001$, matching the highest sequencing error simulations, and explaining the apparent bias.  In contrast, in the ``simple'' simulations, $\pi_\text{within}$ is approximately $0.03$ which is an order of magnitude larger than the highest sequencing error simulated and hence the bias is negligible.
 
 % We hence highly recommend to use our novel estimators over the ones implemented in \toolname{PoPoolation2}.
 
