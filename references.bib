@@ -222,6 +222,51 @@
     year = {2018}
 }
 
+@ARTICLE{Gautier2022-zd,
+  title    = "f-Statistics estimation and admixture graph construction with
+              {Pool-Seq} or allele count data using the {R} package poolfstat",
+  author   = "Gautier, Mathieu and Vitalis, Renaud and Flori, Laurence and
+              Estoup, Arnaud",
+  abstract = "By capturing various patterns of the structuring of genetic
+              variation across populations, f -statistics have proved highly
+              effective for the inference of demographic history. Such
+              statistics are defined as covariances of SNP allele frequency
+              differences among sets of populations without requiring haplotype
+              information and are hence particularly relevant for the analysis
+              of pooled sequencing (Pool-Seq) data. We here propose a
+              reinterpretation of the F (and D ) parameters in terms of
+              probability of gene identity and derive from this unified
+              definition unbiased estimators for both Pool-Seq data and
+              standard allele count data obtained from individual genotypes. We
+              implemented these estimators in a new version of the R package
+              poolfstat, which now includes a wide range of inference methods:
+              (i) three-population test of admixture; (ii) four-population test
+              of treeness; (iii) F 4 -ratio estimation of admixture rates; and
+              (iv) fitting, visualization and (semi-automatic) construction of
+              admixture graphs. A comprehensive evaluation of the methods
+              implemented in poolfstat on both simulated Pool-Seq (with various
+              sequencing coverages and error rates) and allele count data
+              confirmed the accuracy of these approaches, even for the most
+              cost-effective Pool-Seq design involving relatively low
+              sequencing coverages. We further analysed a real Pool-Seq data
+              made of 14 populations of the invasive species Drosophila
+              suzukii, which allowed refining both the demographic history of
+              native populations and the invasion routes followed by this
+              emblematic pest. Our new package poolfstat provides the community
+              with a user-friendly and efficient all-in-one tool to unravel
+              complex population genetic histories from large-size Pool-Seq or
+              allele count SNP data.",
+  journal  = "Mol. Ecol. Resour.",
+  volume   =  22,
+  number   =  4,
+  pages    = "1394--1416",
+  month    =  may,
+  year     =  2022,
+  keywords = " Drosophila suzukii ; Pool-Seq; admixture graph; demographic
+              inference; f-statistics",
+  language = "en"
+}
+
 @article{baumdicker2022efficient,
   title={Efficient ancestry and mutation simulation with msprime 1.0},
   author = {Baumdicker, Franz and Bisschop, Gertjan and Goldstein, Daniel
@@ -252,4 +297,24 @@
   pages={e1004842},
   year={2016},
   publisher={Public Library of Science}
+}
+
+@article{Ferretti2013,
+    abstract = {Next generation sequencing of pooled samples is an effective approach for studies of variability and differentiation in populations. In this paper we provide a comprehensive set of estimators of the most common statistics in population genetics based on the frequency spectrum, namely the Watterson estimator $\theta$W, nucleotide pairwise diversity $\Pi$, Tajima's D, Fu and Li's D and F, Fay and Wu's H, McDonald-Kreitman and HKA tests and FST, corrected for sequencing errors and ascertainment bias. In a simulation study, we show that pool and individual $\theta$ estimates are highly correlated and discuss how the performance of the statistics vary with read depth and sample size in different evolutionary scenarios. As an application, we reanalyse sequences from Drosophila mauritiana and from an evolution experiment in Drosophila melanogaster. These methods are useful for population genetic projects with limited budget, study of communities of individuals that are hard to isolate, or autopolyploid species. {\textcopyright} 2013 John Wiley {\&} Sons Ltd.},
+    author = {Ferretti, Luca and Ramos-Onsins, Sebasti{\'{a}}n E. and P{\'{e}}rez-Enciso, Miguel},
+    doi = {10.1111/mec.12522},
+    file = {:home/lucas/Documents/Mendeley/2013/Ferretti, Ramos-Onsins, P{\'{e}}rez-Enciso - Population genomics from pool sequencing.pdf:pdf;:home/lucas/Documents/Mendeley/2013/Ferretti, Ramos-Onsins, P{\'{e}}rez-Enciso - Population genomics from pool sequencing(2).pdf:pdf},
+    issn = {1365-294X},
+    journal = {Molecular Ecology},
+    keywords = {Animals,Computer Simulation,Drosophila / genetics,Genetic*,Genetics,Genomics / methods*,High-Throughput Nucleotide Sequencing,Luca Ferretti,MEDLINE,Miguel P{\'{e}}rez-Enciso,Models,NCBI,NIH,NLM,National Center for Biotechnology Information,National Institutes of Health,National Library of Medicine,Non-U.S. Gov't,Population / methods*,PubMed Abstract,Research Support,Sample Size,Sebasti{\'{a}}n E Ramos-Onsins,Statistical,composite likelihood estimators,doi:10.1111/mec.12522,genetic differentiation,high-throughput sequencing,neutrality tests,pmid:24102736,pool sequencing},
+    mendeley-groups = {Need to Read,Omics and eDNA,Population Genetics,Software and Tools},
+    month = {nov},
+    number = {22},
+    pages = {5561--5576},
+    pmid = {24102736},
+    publisher = {Mol Ecol},
+    title = {{Population genomics from pool sequencing}},
+    url = {http://doi.wiley.com/10.1111/mec.12522 https://pubmed.ncbi.nlm.nih.gov/24102736/},
+    volume = {22},
+    year = {2013}
 }

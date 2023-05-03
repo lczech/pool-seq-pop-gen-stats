@@ -122,8 +122,8 @@
 % and comment out the respective other line.
 % LaTeX is so easy ;-)
 
-\newcommand\todo[1]{{\stepcounter{todo}\color{purple}{TODO \arabic{todo}: #1}}}
-% \newcommand\todo[1]{}
+% \newcommand\todo[1]{{\stepcounter{todo}\color{purple}{TODO \arabic{todo}: #1}}}
+\newcommand\todo[1]{}
 
 % Same for "popoolissue", which we use to annotate our questions for the popoolation team
 % \newcommand\popoolissue[1]{{\stepcounter{popoolissue}\color{purple}{ITEM \arabic{popoolissue}: #1}}}
@@ -284,30 +284,34 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \fbox{%
   \parbox{48em}{
         \large
-        \textbf{Version: 2023-04-12}
+        \textbf{Version: 2023-05-02}
         \\ \\
-        See \url{https://github.com/lczech/pool-seq-pop-gen-stats} \\
-        for the latest version of this document.
+        The latest version of this document can be found at \\
+        \url{https://github.com/lczech/pool-seq-pop-gen-stats}
   }%
 }
 \vspace*{2em}
 
-% \section*{Abstract}
-% \label{supp:sec:Abstract}
+\section*{Abstract}
+\label{supp:sec:Abstract}
 
 This document describes our assessment of the specific pool-sequencing (Pool-seq) equations for population genetic measures of diversity (such as $\theta_\pi$, $\theta_\text{Watterson}$, Tajima's $D$), and differentiation (such as $\mathfst$).
 The aim of these equations is to correct for biases of pool sequencing, specifically limited sample size (number of individuals pooled, or pool size~$\samplesize$) and limited coverage (number of reads obtained from those individuals, or coverage $\coverage$).
 
-We re-render some approaches originally presented and implemented in \toolname{PoPoolation} \cite{Kofler2011a} and \toolname{PoPoolation2} \cite{Kofler2011b}, which are largely based on two sources:
-\begin{itemize}
-  \item The reverse-engineered code of \toolname{PoPoolation} and \toolname{PoPoolation2}. We want this document to represent the equations that are actually computed when running these programs, as we feel that they need a more thorough assessment than what is available in the current literature.
-  \item The PoPoolation equations document \texttt{correction\_equations.pdf} as found in their code repository; we provide a copy at \url{https://github.com/lczech/popoolation/blob/master/files/correction_equations.pdf}. This document derives some of the equations implemented, but also contains equations that are not implemented in \toolname{PoPoolation} but may be of interest for a deeper understanding of the topic.
-\end{itemize}
-
-Furthermore, we (re-)derive two consistent estimators for \fst{} for pool sequencing data, using two distinct definition of \fst{}, that correct for both biases described above.
-Then, we evaluate the different estimators for \fst{} using simulated data, showing their particular biases.
+We re-render some approaches originally presented and implemented in \toolname{PoPoolation} \cite{Kofler2011a} and \toolname{PoPoolation2} \cite{Kofler2011b}.
+Furthermore, we (re-)derive two consistent (unbiased) estimators for \fst{} for pool sequencing data, using two distinct definition of \fst{}, that correct for both biases described above.
+We also evaluate the different estimators for \fst{} here using simulated data, showing their particular biases.
 Lastly, we derive novel estimators for \fst{} that additionally take sequencing error into account.
 All equations except for the latter are implemented in our tool \href{https://github.com/lczech/grenedalf}{grenedalf}.
+
+\vspace*{2em}
+\textbf{Note on sources:}
+\begin{itemize}
+    \item This document is partially based on the PoPoolation equations document \texttt{correction\_equations.pdf} as found in their code repository; we provide a copy at \url{https://github.com/lczech/popoolation/blob/master/files/correction_equations.pdf}. This document derives some of the equations implemented, but also contains equations that are not implemented in \toolname{PoPoolation} but may be of interest for a deeper understanding of the topic.
+    \item Furthermore, we incorporated several implementation details from the reverse-engineered code of \toolname{PoPoolation} and \toolname{PoPoolation2}. We want this document to represent the equations that are actually computed when running these programs (and their re-implementations in \toolname{grenedalf}), as we feel that they need a more thorough assessment than what is available in the current literature.
+    \item Lastly, for the avid reader, apart from these documents and the original publications of \toolname{PoPoolation} \cite{Kofler2011a} and \toolname{PoPoolation2} \cite{Kofler2011b}, we also recommend to have a look at the \toolname{npstat} \cite{Ferretti2013} and \toolname{poolfstat} \cite{Hivert2018,Gautier2022-zd} publications, which contain further renderings of some of the equations.
+\end{itemize}
+
 
 % ======================================================================================================
 %          TOC
@@ -338,10 +342,11 @@ We first define the input that we assume to be given for all subsequent equation
 In the software implementation of the equations, these are be based on the input data, or set by the user as parameters.
 
 $\samplesize$ :
-Pool size, provided by the user. This is the number of individuals that were pooled together for sequencing.
+Pool size, provided by the user. This is the number of individuals that were pooled together for sequencing of a population.
 
 $\coverage$ :
-Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?  Yes and no -- throughout we assume that it is not random, which is fine -- the randomness in the coverage is ancillary (\url{https://en.wikipedia.org/wiki/Ancillary_statistic}) to the estimation of the frequencies, and so in some sense it's uninteresting / unimportant whether it's random or not.}
+Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. 
+% \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?  Yes and no -- throughout we assume that it is not random, which is fine -- the randomness in the coverage is ancillary (\url{https://en.wikipedia.org/wiki/Ancillary_statistic}) to the estimation of the frequencies, and so in some sense it's uninteresting / unimportant whether it's random or not.}
 
 $b$ :
 Minimum allele count, provided by the user.
@@ -349,7 +354,7 @@ We do not want to consider SNPs with fewer than $b$ alternative reads in the dat
 Note that we assume $b$ to be a user-provided constant,
 and hence leave it out of (most) function arguments for simplicity.
 
-For most equations we will consider a single pool sequencing experiment, but in cases where we consider multiple experiments, we will denote the different experiments with subscripts in parentheses, such as $\samplesize_{(1)}, \samplesize_{(2)},\ldots$ or $\coverage_{(1)}, \coverage_{(2)}, \ldots$ to denote different populations or experiments.
+For most equations we will consider a single pool sequencing sample (one population, or one experiment), but in cases where we consider multiple samples (multiple pool-sequenced populations), we will denote the different samples with subscripts in parentheses, such as $\samplesize_{(1)}, \samplesize_{(2)},\ldots$ or $\coverage_{(1)}, \coverage_{(2)}, \ldots$ to denote different populations or experiments.
 
 Beyond these data-specific and user-specified parameters, we will use the following notation.  In general, we will use capital letters for random variables in our model of pool sequencing, which will be described shortly in \secref{supp:sec:model}.  We will also differentiate sample quantities (\ie those that are computed from data) from their population counterparts (\ie parameters that describe the population from which the data were sampled) with hats.  For example, we differentiate the frequency of the $A$ allele in the whole population, $f_A$, from the empirical frequency of $A$ nucleotides in our pool sequencing sample, $\empfreq_A$.
 
@@ -357,15 +362,16 @@ $\tau$ :
 Index over nucleotides, with $\tau \in \left\{ \text{A}, \text{C}, \text{G}, \text{T} \right\}$ being implicit in any summations.
 
 $C_\tau$ :
-Nucleotide counts, \ie, how many reads have a certain nucleotide $\tau$ at a given position in the genome.
+Nucleotide counts, \ie how many reads have a certain nucleotide $\tau$ at a given position in the genome. Note that we generally do not make assumptions about the focal position in the genome being biallelic, unless stated otherwise.
 
-$\coverage = \sum_\tau C_\tau$ : The coverage at a given position.
+$\coverage = \sum_\tau C_\tau$ : The (total) coverage at a given position.
 
 $f_\tau$ :
 Nucleotide frequencies in the population, \ie the proportion of haplotypes that have nucleotide $\tau$ at the focal position.
 
 $\empfreq_\tau$ :
-Empirical nucleotide frequencies, \ie, $\empfreq_\tau := C_\tau / \coverage$. %\sfrac{c_\tau}{C}$
+Empirical nucleotide frequencies, \ie $\empfreq_\tau := C_\tau / \coverage$. Naturally, $\sum_\tau \empfreq_\tau = 1$.
+%\sfrac{c_\tau}{C}$
 
 % $p$, $q$ :
 % For biallelic SNP positions, we simplify and instead of the four $f_\tau$ values,
@@ -385,15 +391,14 @@ Index of summation over potential pool sizes $\samplesize$.
 %          Harmonic Numbers
 % ------------------------------------------------------------------------------------------------------
 
-We will also make use of the generalized harmonic numbers, which frequently arise in coalescent theory.   Define $a_1$ and $a_2$
-as the sum of (squared) reciprocals of the first $m$ positive integers:
+We will also make use of the generalized harmonic numbers, which frequently arise in coalescent theory.  Define $a_1$ and $a_2$ as the sum of (squared) reciprocals of the first $n$ positive integers:
 %
 \begin{align}
     \label{eq:an}
-    a_1(m) &:= \sum_{k=1}^{m} \frac{1}{k}
+    a_1(n) &:= \sum_{k=1}^{m} \frac{1}{k}
     \\
     \label{eq:bn}
-    a_2(m) &:= \sum_{k=1}^{m} \frac{1}{k^2}
+    a_2(n) &:= \sum_{k=1}^{m} \frac{1}{k^2}
 \end{align}
 %
 
@@ -453,10 +458,10 @@ The last equality holds as $\sum_\tau f_\tau = 1$.
 %          Theta Pi
 % ======================================================================================================
 
-\section{Pairwise Heterozygosity \texorpdfstring{$\theta_\pi$}{}}
+\section{Pairwise Heterozygosity \texorpdfstring{$\theta_\pi$}{Theta Pi}}
 \label{supp:sec:ThetaPi}
 
-First, we derive estimators for the pairwise heterozygosity, $\theta_\pi$, also called Tajima's $\pi$.  Formally, pairwise heterozygosity is the probability that two haploids drawn \emph{from the population} have different alleles at a position chosen uniformly at random.  We always assume that the population is large so that for a particular site, $\theta_\pi = 1 -\sum_\tau f_\tau^2$ which can be seen by noting that the probability that we pick two individuals with the $\tau$ allele is $f_\tau^2$.
+First, we derive estimators for the pairwise heterozygosity, $\theta_\pi$, also called Tajima's $\pi$.  Formally, pairwise heterozygosity is the probability that two haploids drawn \emph{from the population} have different alleles at a position chosen uniformly at random.  We always assume that the population is large so that for a particular site, $\theta_\pi = 1 -\sum_\tau f_\tau^2$, which can be seen by noting that the probability that we pick two individuals with the $\tau$ allele is $f_\tau^2$.
 
 If we were to sequence individuals, it would be straightforward to derive unbiased estimators for $\theta_\pi$, but instead we obtain a pool of reads, which introduces two major issues.  The first is that we no longer have access to individuals.  If we had sequenced individuals, we could estimate $\theta_\pi$ by looking at two individuals and asking if they have different alleles at a position, but in pool sequencing, we can only look at two different reads and ask if they have different alleles.  The issue is that we cannot know whether those reads were from the same individual or from different individuals, so a naive estimator of $\theta_\pi$ that just looks at pairwise differences between reads will be biased because in some fraction of times those reads will have come from the same individual, and hence must have the same allele (ignoring sequencing error).  The second major issue is that positions where only a small number of reads have a particular allele could be an artifact of sequencing error.  As such, PoPoolation restricts to sites where there are either exactly $0$ or at least $b$ reads supporting each allele.
 
@@ -469,7 +474,7 @@ Below we derive PoPoolation's estimator of pairwise heterozygosity, $\thetapi$, 
 % \subsection{Unbiased Pool-seq estimator of \texorpdfstring{$\theta_{\pi}$}{Theta Pi} for biallelic SNPs}
 % \label{supp:sec:ThetaPi:sub:PoolSequencing}
 
-\subsubsection*{PoPoolation Pool-seq estimator, $\thetapi$}
+\subsubsection*{PoPoolation Pool-seq estimator, \texorpdfstring{$\thetapi$}{Theta Pi hat}}
 \label{supp:sec:ThetaPi:sub:PoolSequencing}
 
 % % ------------------------------------------------------------------------------------------------------
@@ -485,7 +490,7 @@ PoPoolation begins by defining %
     \thetapi^{\samplesize\to\infty} &:= \frac{\coverage}{\coverage-1} \left(1 - \sum_\tau \empfreq_\tau^2 \right),
 \end{align}
 %
-which is equal to the left hand side of Equation~\ref{eq:hetunbiased} up to a factor of $\frac{\samplesize}{\samplesize-1}$.  This indicates that this is a biased estimator of the heterozygosity at this site, but the bias is on the order of $O\left(\frac{1}{\samplesize}\right)$ which means that PoPoolation assumes an extremely large pool size, which is why we use the $\samplesize\to\infty$ superscript.
+which is equal to the left hand side of Equation~\ref{eq:hetunbiased} up to a factor of $\frac{\samplesize}{\samplesize-1}$.  This indicates that this is a biased estimator of the heterozygosity at this site, but the bias is on the order of $O\left(\frac{1}{\samplesize}\right)$, which means that PoPoolation assumes an extremely large pool size, which is why we use the $\samplesize\to\infty$ superscript.
 
 At this point, the PoPoolation equations document begins to simplify the above equation, and then breaks it down for biallelic SNPs. However, their (and our) implementation differs from this, and uses the above equation that works with any (not just biallelic) SNPs. We hence do not introduce these simplifications here.
 % \todo{I thought a bit more about this. the heterozygosity is indeed computed from all four bases. BUT: the below equations are still assuming biallelic SNPs! is that a problem?! it's solvable by just using biallelic snps as in the computation -- but what would it mean theoretically to use this correction for non-biallelic snps?  JPS: their whole correction assumes that the mutation rate is vanishingly small so that you should (almost) never see non-biallelic SNPs.  In practice, I would think that multi-allelic SNPs would actually be quite rare and so shouldn't be something we worry about too much.}
@@ -504,7 +509,9 @@ Note however that the computation is still only conducted on biallelic sites, as
 
 Other than the bias from the finite pool size, $\thetapi^{\samplesize\to\infty}$ is a reasonable estimator of the pairwise heterozygosity at a given site.  To obtain an overall estimate of $\theta_\pi$, we could average $\thetapi^{\samplesize\to\infty}$ across all sites.  PoPoolation seeks to avoid including sites that appear to be segregating solely because of sequencing error, however, which adds a complication.  We expect that sequencing errors should be rare, and so it would be extremely unlikely to see $b$ or more reads supporting a particular allele solely due to sequencing error.  As such, we can remove all sites with fewer than $b$ reads supporting the minor allele.  This is problematic, however, and biases the estimator -- while removing such sites certainly removes most or all sites that are segregating solely due to sequencing error, it also removes a large number of sites where the mutation just happens to be at low frequency.
 
-The approach that PoPoolation takes is to assume neutrality and an equilibrium demography (all variation is neutral, and the population is of constant size and in mutation-drift equilibrium), calculate the bias of $\thetapi^{\samplesize\to\infty}$, and introduce a term to correct for that bias.  Despite using sequencing error as a motivation, PoPoolation ignores sequencing error in the following derivation.  The derivation will assume biallelic sites, and all expectations in this section will be with respect to both the randomness in the pool-seq experiment as well as the randomness in the evolutionary process.  To begin, we compute the expectation of $\thetapi^{\samplesize\to\infty}$ when we treat sites with fewer than $b$ reads supporting the minor allele as not contributing to $\thetapi^{\samplesize\to\infty}$.  Since we are assuming that we are only looking at biallelic sites, we will use $M$ to denote the number of reads supporting the derived allele.  Letting $\mathcal{E}_b$ be the event that at least $b$ reads support the minor allele, we see
+The approach that PoPoolation takes is to assume neutrality and an equilibrium demography (all variation is neutral, and the population is of constant size and in mutation-drift equilibrium), calculate the bias of $\thetapi^{\samplesize\to\infty}$, and introduce a term to correct for that bias.  Despite using sequencing error as a motivation, PoPoolation ignores sequencing error in the following derivation.  The derivation will assume biallelic sites, and all expectations in this section will be with respect to both the randomness in the pool-seq experiment as well as the randomness in the evolutionary process.  
+
+To begin, we compute the expectation of $\thetapi^{\samplesize\to\infty}$ when we treat sites with fewer than $b$ reads supporting the minor allele as not contributing to $\thetapi^{\samplesize\to\infty}$.  Since we are assuming that we are only looking at biallelic sites, we will use $M$ to denote the number of reads supporting the derived allele.  Letting $\mathcal{E}_b$ be the event that at least $b$ reads support the minor allele, we see
 %
 \begin{align}
 \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right] &= \sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}(M = m)\\
@@ -516,13 +523,7 @@ The approach that PoPoolation takes is to assume neutrality and an equilibrium d
 % &= P(\mbox{SNP} | n) \cdot \frac{2}{C(C-1)} \cdot \sum_{m=b}^{C-b} m(C-m) \cdot P(m|C,n)
 \end{align}
 %
-In words, the expected value is computed by summing all possible SNP counts (that exceed the minimum count $b$)
-that can occur in a pool with coverage $\coverage$,
-weighted by the probability to have each of those counts.
-
-As we are using the derived allele count $m$ in the equation above,
-and either the derived or ancestral allele could be the minor allele,
-we ``sandwich'' our potential values for the coverage between $b$ and $\coverage-b$.
+In words, the expected value is computed by summing all possible SNP counts (that exceed the minimum count $b$) that can occur in a pool with coverage $\coverage$, weighted by the probability to have each of those counts.  As we are using the derived allele count $m$ in the equation above, and either the derived or ancestral allele could be the minor allele, we ``sandwich'' our potential values for the coverage between $b$ and $\coverage-b$.
 
 The two probabilities used above are computed as follows.
 
@@ -571,7 +572,7 @@ This shows that if we use our estimator $\thetapi^{\samplesize\to\infty}$ but tr
 2\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 \]
 
-which we will now use to elimiate said bias.
+which we will now use to eliminate said bias.
 
 %@\todo{Jeff, Lucas I think there is still something weird in the substitution of the P(SNP given n). As it is written using Theta= S/an, the substitution is not a probability but the number of segregating sites}
 
@@ -596,11 +597,11 @@ Based on the previous section, we can construct an unbiased estimator for $\thet
     }
 \end{align}
 %
-\todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the coverage $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over coverage levels and debias each coverage level appropriately.}
+% \todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the coverage $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over coverage levels and debias each coverage level appropriately.}
 
+The approach to compute this for a window is to sum up all values across the SNPs in the window.
 This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{pi},
 and implemented in our \toolname{grenedalf} as well. Note that the denominator only depends on the total coverage $\coverage$ and the pool size $\samplesize$, and hence only needs to be computed once per coverage level, yielding a significant computational speedup.
-
 
 % \begin{align}
 %  \mathbb{E}(\theta_\pi,c) = \theta a_1(n) \frac{C}{C-1}\sum_{m=b}^{C-b}\left( 1 -
@@ -643,9 +644,9 @@ and implemented in our \toolname{grenedalf} as well. Note that the denominator o
 \section{Watterson's Theta \texorpdfstring{$\widehat{\theta}_w$}{}}
 \label{supp:sec:ThetaWatterson}
 
-\todo{this section name has a hat, while the previous theta pi section name does not. Jeff, which one do you prefer? JPS: I prefer Hat for this section because Watterson's is explicitly an estimator, whereas $\theta_\pi$ as we defined it -- is a population-level parameter (i.e., the pairwise heterozygosity \emph{in the population})}
+% \todo{this section name has a hat, while the previous theta pi section name does not. Jeff, which one do you prefer? JPS: I prefer Hat for this section because Watterson's is explicitly an estimator, whereas $\theta_\pi$ as we defined it -- is a population-level parameter (i.e., the pairwise heterozygosity \emph{in the population})}
 
-\todo{JPS:  Hey Lucas -- I think that all of these should be divided by the number of SNPs, otherwise it's an estimate of the \emph{total} rate of mutation across all sites.  Just want to check that that's what's in the code...  --> it is! well, both, the absolute and relative value are printed. thanks for checking! dividing by the number of sites with sufficient coverage (according to the min count and min cov settings) to get the to relative one.}
+% \todo{JPS:  Hey Lucas -- I think that all of these should be divided by the number of SNPs, otherwise it's an estimate of the \emph{total} rate of mutation across all sites.  Just want to check that that's what's in the code...  --> it is! well, both, the absolute and relative value are printed. thanks for checking! dividing by the number of sites with sufficient coverage (according to the min count and min cov settings) to get the to relative one.}
 
 % ------------------------------------------------------------------------------------------------------
 %          Theta Watterson
@@ -654,12 +655,11 @@ and implemented in our \toolname{grenedalf} as well. Note that the denominator o
 % \subsection{Pool-Sequencing Correction}
 % \label{supp:sec:ThetaWatterson:sub:PoolSequencing}
 
-Under neutrality, and equilibrium demography $\theta_\pi$ is equal to $4N_e\mu =: \theta$, where $\theta$ is four times the effective population size times the per-generation mutation rate, and hence, the estimator in the previous section can be used as an estimate of the population-scaled mutation rate.  An alternative estimate of the mutation rate is Watterson's theta, $\widehat{\theta}_w$, which is based on the number of segregating sites instead of the pairwise heterozygosity.  If we had sequenced individuals, the usual definition of $\widehat{\theta}_w$ is (e.g., Equation (3.5) of \citeay{Hahn2018}):
+Under neutrality and equilibrium demography, $\theta_\pi$ is equal to $4N_e\mu =: \theta$, where $\theta$ is four times the effective population size $N_e$ times the per-generation mutation rate $\mu$, and hence, the estimator in the previous section can be used as an estimate of the population-scaled mutation rate.  An alternative estimate of the mutation rate is Watterson's theta, $\widehat{\theta}_w$, which is based on the number of segregating sites instead of the pairwise heterozygosity.  If we had sequenced $n$ individuals, the usual definition of $\widehat{\theta}_w$ is:
 \[
 \widehat{\theta}_w := \frac{S}{\text{\# sites} \cdot a_1(n-1) }
 \]
-\todo{pretty sure that the $n$ in the denominator above is wrong, as $n$ is the pool size, but it should be coverage, or not? Jeff, can you please check?  JPS: this denominator is right -- the first paragraph up to here is talking about what we would do if we had sequenced \emph{individuals}}
-where $S$ is the number of segregating sites. In the pool sequencing case we might hope to just count up the number of sites that have more than one allele to use in place of $S$, but sequencing error is deeply problematic here.  Any place where any read has a sequencing error will look like a segregating site, vastly inflating our estimate of the true number of sites that are segregating in our sample.  PoPoolation therefore follows a similar approach as in the case of the pairwise heterozygosity, by only considering a site to be segregating if at least $b$ reads support each of two alleles.  Again, this restriction introduces bias because it will miss many sites where one of the alleles really is at a low frequency -- but still segregating -- in the pool.  As before, we will compute this bias and then correct for it, again assuming neutrality, and equilibrium demography, and that the mutation rate is small enough to only focus on biallelic sites.
+where $S$ is the number of segregating sites; see e.\,g., Equation (3.5) of \citeay{Hahn2018}. In the pool sequencing case we might hope to just count up the number of sites that have more than one allele to use in place of $S$, but sequencing error is deeply problematic here.  Any place where any read has a sequencing error will look like a segregating site, vastly inflating our estimate of the true number of sites that are segregating in our sample.  PoPoolation therefore follows a similar approach as in the case of the pairwise heterozygosity, by only considering a site to be segregating if at least $b$ reads support each of two alleles.  Again, this restriction introduces bias, because it will miss many sites where one of the alleles really is at a low frequency -- but still segregating -- in the pool.  As before, we will compute this bias and then correct for it, again assuming neutrality, and equilibrium demography, and that the mutation rate is small enough to only focus on biallelic sites.
 
 
 Formally, let $M_\ell$ be the number of reads supporting the derived allele at site $\ell$, and define
@@ -678,7 +678,6 @@ We then define our naive pool-seq analog of Watterson's $\theta$ as
 \[
 \widehat{\theta}_w :=\frac{1}{\text{\# sites} \cdot a_1(\samplesize-1)}\sum_{\ell} S_b(\ell)
 \]
-\todo{again, sure that this is $n$ here? same below again. JPS: Yeah -- the $a_1(n-1)$ comes from Coalescent considerations on the $n$ haplotypes in the same (i.e., the sample size).  It's exactly the same $a_1(n-1)$ that shows up in eq. (9)}
 
 Reasoning the same as above, we get the expected value of $\widehat{\theta}_w$ as
 %
@@ -706,15 +705,8 @@ To accommodate different coverage levels throughout the genome, denote the set o
          \sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
     }
 \end{align}
-%
-\todo{I don't think the above is correct. it is using $\widehat{\theta}_w$ in the numerator, which contains the additional $a_1$ term that is not meant to be there, as it cancels out. Jeff, can you check please?  JPS: I fixed to deal with the coverage issue as above.}
 
-As before, the denominator only depends on the coverage $\coverage$,
-and hence only needs to be computed once per coverage level that is present in the data.
-
-Again, the approach to compute this for a window is to sum up all values across the SNPs in the window.
-This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta},
-and implemented in our \toolname{grenedalf} as well.
+Again, the approach to compute this for a window is to sum up all values across the SNPs in the window.  As before, the denominator only depends on the coverage $\coverage$, and hence only needs to be computed once per coverage level that is present in the data.  This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta}, and implemented in our \toolname{grenedalf} as well.
 
 % ------------------------------------------------------------------------------------------------------
 %          Simplified Theta Watterson
@@ -837,11 +829,7 @@ We here skip this part for brevity.
 \subsection{Integration with Classic Tajima's D}
 \label{supp:sec:TajimaD:sub:Classic}
 
-On large windows, the classic Tajima's D is not a measure of significance (in number of standard deviations away from the null hypothesis), but instead is a measure of the magnitude of the divergence from neutrality.
-This is because all loci are considered completely linked, even if they are not in reality.
-
-However, the above pool-sequencing Tajima's D instead consideres all loci as completely unlinked.
-This ignores positive correlations between linked sites, so it gives a different numerical result that has a much higher absolute value compared to classic Tajima's D.
+On large windows, the classic Tajima's D is not a measure of significance (in number of standard deviations away from the null hypothesis), but instead is a measure of the magnitude of the divergence from neutrality.  This is because all loci are considered completely linked, even if they are not in reality.  However, the above pool-sequencing Tajima's D instead consideres all loci as completely unlinked. This ignores positive correlations between linked sites, so it gives a different numerical result that has a much higher absolute value compared to classic Tajima's D.
 
 Now, we want to obtain a correction term for the pool-sequence Tajima's D to obtain values that are comparable to classic Tajima's D in non-small windows, that is, we want a measure of the magnitude of the divergence from neutrality.
 We again follow the PoPoolation approach, and here derive the equations that are actually implemented.
@@ -852,11 +840,11 @@ We again follow the PoPoolation approach, and here derive the equations that are
 
 \subsubsection*{Approach by Achaz}
 
-To this end, PoPoolation2 uses a modified version of the $Y^*$ test of \citeay{Achaz2008},
+To this end, \toolname{PoPoolation} uses a modified version of the $Y^*$ test of \citeay{Achaz2008},
 which was originally developed as a test for neutrality despite the presence of sequencing errors.
 This test only works when excluding singletons, that is, we set $b:=2$ for this part.
 
-Following PoPoolation and \citeay{Achaz2008}, we first define:
+Following \toolname{PoPoolation} and \citeay{Achaz2008}, we first define:
 %
 \begin{align}
 f^*(n) &:= \frac{n-3}{a_1(n-1) \cdot (n-1)-n}
@@ -878,11 +866,10 @@ f^*(n) &:= \frac{n-3}{a_1(n-1) \cdot (n-1)-n}
 Note that these equations were originally developed for data from individuals,
 and hence here, $n$ denotes the number of individuals \emph{as if} we were doing individual sequencing.
 
-NB: The PoPoolation document recommends to counter-check the correctness of their equation
-with the original of \citeay{Achaz2008}.
-In fact, PoPoolation introduced a slight mistake in the last term of $\beta^*$,
+NB: The \toolname{PoPoolation} document recommends to counter-check the correctness of their equation with the original of \citeay{Achaz2008}.
+In fact, \toolname{PoPoolation}  introduced a slight mistake in the last term of $\beta^*$,
 which we have fixed here. Above is the (hopefully) correct one, following \citeay{Achaz2008}.
-Note that the mistake only concerns the PoPoolation equations document, but not their implementation.
+Note that the mistake only concerns the \toolname{PoPoolation}  equations document, but not their implementation.
 
 \popoolissue{The above is indeed not a big one, but we thought it's good to mention it.}
 
@@ -900,7 +887,7 @@ Note that the mistake only concerns the PoPoolation equations document, but not 
 
 The only unresolved parameter is $n$, which corresponds to the number of individuals sequenced --
 if we were to do individual sequencing.
-In our case of pool sequencing, according to PoPoolation,
+In our case of pool sequencing, according to \toolname{PoPoolation},
 we can reasonably substitute this with the expected number of distinct individuals sequenced.
 
 To this end, we use the coverage $\coverage$, as well as the pool size $n$, which we here use as our substitute for the number of individuals sequenced.
@@ -926,7 +913,7 @@ Given a set of integers $A = \{1, \ldots, n\}$ (corresponding to individuals),
 pick a set $B$ of $C$ elements from set $A$ with replacement (corresponding to reads);
 what is the expected number of distinct values (individuals) that have been picked in $B$ (that we have reads from)?
 
-PoPoolation computes this value by brute force using \eqnref{eq:IndivSeqBruteForce},
+\toolname{PoPoolation} computes this value by brute force using \eqnref{eq:IndivSeqBruteForce},
 that is, by trying all possible ways to pick numbers from the set.
 However, there exists a closed form solution to this question, which yields massive speedups for larger coverages, which we have implemented.
 
@@ -1016,8 +1003,7 @@ The above is the estimator as implemented in \toolname{PoPoolation} and in our i
 In the above computation of the correction term for Tajima's D for pool sequencing,
 several assumptions were made that lead to the resulting estimator being conservative,
 \ie yielding smaller values that what would be expected from individual sequencing of samples.
-Based on the explanation in the PoPoolation equations document (most of the text in this section is copied from there),
-we explore the underlying assumptions and biases.
+Based on the explanation in the \toolname{PoPoolation} equations document (most of the text in this section is adapted from there), we explore the underlying assumptions and biases.
 
 The locally fluctuating coverage is replaced by the minimum coverage.
 This makes the variance estimator larger, and therefore leads to conservative estimates of Tajima's D.
@@ -1041,7 +1027,7 @@ Summing up, the approximate variance in the above equations provides a conservat
 and the values for Tajima's D will tend to be smaller than those that would be expected
 for an experiment based on individual sequencing of single samples.
 
-Lastly, the PoPoolation code repository contains a plot showing the correlation between the classical Tajima's D
+Lastly, the \toolname{PoPoolation} code repository contains a plot showing the correlation between the classical Tajima's D
 and the corrected Tajima's D using the equations described above;
 please see \href{https://github.com/lczech/popoolation/raw/master/files/correlation_classic_correctedTajimasD.png}{here},
 where the x-axis corresponds to the classical value, and the y-axis the the corrected one.
@@ -1069,14 +1055,10 @@ From our assessment of the \toolname{PoPoolation} code, and from personal commun
 We want to thank Robert for his support regarding our questions.
 As a consequence of these bugs, we recommend to only use later versions of \toolname{PoPoolation}, or to use our \toolname{grenedalf} instead, which also offers several additional options and is faster.
 
-The effct of those bugs is shown in \figref{fig:bug-exam}. In short, we observed an overestimation of Tajima's D in the range 2.8 to 3.5 times when using the default settings of \toolname{PoPoolation}.
+The effect of those bugs is shown in \figref{fig:bug-exam}. In short, we observed an overestimation of Tajima's D in the range 2.8 to 3.5 times when using the default settings of \toolname{PoPoolation}. We hence recommend to re-run any analyses of Tajima's D that have been conducted with past versions of \toolname{PoPoolation}, in particular if any of their results rely on the exact numerical values.
 
-\todo{elaborate}
-
-\popoolissue{These are the two bugs that we were already in contact with. We already have stated them in the parts of this document where they come up. We just kept this section here for reference, as it is in our preprint.}
 
 \todo{more bugs: the last position of a window is accidentally used as the first of the following instead...}
-
 
 \begin{figure*}[p]
     \centering
@@ -1092,7 +1074,7 @@ The effct of those bugs is shown in \figref{fig:bug-exam}. In short, we observed
         The dashed gray line is at a ratio of 1, which corresponds to the correct value where the computed values are identical.
         In summary, each violin shows the overestimation of Tajima's for one combination of minimum coverage and pool size, where the violin shows the distribution of the overestimation across windows.
         \\
-        We also ran this test with different window sizes (5, 10, 20, 50, 100, 200, 500, and 1000 base pairs). Overall, the overestimation is in the same range as shown here for all window sizes. For windows smaller than 100 base pairs, the overestimation tends to be somewhat higher, and with greater variance. For larger windows above 100 base pairs, the distributions get narrower, as the stochasticity within each window averages out. With windows of 200 base pairs and above, for the same min coverages and pool sizes shown here, the overestimation of Tajima's D converges to where the "belly" of each violin is in the plot.
+        We also ran this test with different window sizes (5, 10, 20, 50, 100, 200, 500, and 1000 base pairs). Overall, the overestimation is in the same range as shown here for all window sizes. For windows smaller than 100 base pairs, the overestimation tends to be somewhat higher, and with greater variance. For larger windows above 100 base pairs, the distributions get narrower, as the stochasticity within each window averages out. With windows of 200 base pairs and above, for the same min coverages and pool sizes shown here, the overestimation of Tajima's D converges to where the ``belly'' of each violin is in the plot.
         \\
         That means, when \toolname{PoPoolation} is run with its default value of 4 for the minimum coverage (option \texttt{--min-coverage}, the second group of violins), depending on pool size, the bug typically causes an overestimation of Tajima's D in the range of 2.8 to 3.5 times. For smaller minimum coverage, the effect is even worse.
         % POOLSIZES="10 20 50 100 200 500 1000"
@@ -1451,8 +1433,8 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 \begin{figure*}[p]
     \centering
     \includegraphics[width=.75\linewidth]{true_hudson_fst-est_spence_hudson-pool_size.pdf}
-    \includegraphics[width=.75\linewidth]{true_hudson_fst-est_spence_hudson-seq_error.pdf}
     \includegraphics[width=.75\linewidth]{true_hudson_fst-est_spence_hudson-read_depth.pdf}
+    \includegraphics[width=.75\linewidth]{true_hudson_fst-est_spence_hudson-seq_error.pdf}
     \vspace*{-1em}
     \caption{
 %         \textbf{Unbiased Hudson}
@@ -1464,8 +1446,8 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 \begin{figure*}[p]
     \centering
     \includegraphics[width=.75\linewidth]{true_nei_fst-est_spence_nei-pool_size.pdf}
-    \includegraphics[width=.75\linewidth]{true_nei_fst-est_spence_nei-seq_error.pdf}
     \includegraphics[width=.75\linewidth]{true_nei_fst-est_spence_nei-read_depth.pdf}
+    \includegraphics[width=.75\linewidth]{true_nei_fst-est_spence_nei-seq_error.pdf}
     \vspace*{-1em}
     \caption{
 %         \textbf{Unbiased Nei}
@@ -1477,8 +1459,8 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 \begin{figure*}[p]
     \centering
     \includegraphics[width=.75\linewidth]{true_nei_fst-est_kofler-pool_size.pdf}
-    \includegraphics[width=.75\linewidth]{true_nei_fst-est_kofler-seq_error.pdf}
     \includegraphics[width=.75\linewidth]{true_nei_fst-est_kofler-read_depth.pdf}
+    \includegraphics[width=.75\linewidth]{true_nei_fst-est_kofler-seq_error.pdf}
     \vspace*{-1em}
     \caption{
 %         \textbf{Kofler}
@@ -1490,8 +1472,8 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 \begin{figure*}[p]
     \centering
     \includegraphics[width=.75\linewidth]{true_hudson_fst-est_karlsson-pool_size.pdf}
-    \includegraphics[width=.75\linewidth]{true_hudson_fst-est_karlsson-seq_error.pdf}
     \includegraphics[width=.75\linewidth]{true_hudson_fst-est_karlsson-read_depth.pdf}
+    \includegraphics[width=.75\linewidth]{true_hudson_fst-est_karlsson-seq_error.pdf}
     \vspace*{-1em}
     \caption{
 %         \textbf{Karlsson}
@@ -1500,7 +1482,7 @@ In the second set of simulations we used \texttt{msprime} \citep{baumdicker2022e
 \label{fig:Karlsson}
 \end{figure*}
 
-We show the results of the simulations in Figures~\ref{fig:UnbiasedHudson}-\ref{fig:Karlsson}. Each Figure shows the comparison of the estimated values versus the true values, for \texttt{msprime} on the left, and for the "simple" simluation on the right. Each plot is repeated three times, colorized by Pool Size, Sequencing Error, and Read Depth, respectively, in order to show the effects of each of these parameters on the estimation.
+We show the results of the simulations in Figures~\ref{fig:UnbiasedHudson}-\ref{fig:Karlsson}. Each Figure shows the comparison of the estimated values versus the true values, for \texttt{msprime} on the left, and for the "simple" simluation on the right. Each plot is repeated three times, colorized by Pool Size, Read Depth, and Sequencing Error, respectively, in order to show the effects of each of these parameters on the estimation.
 
 We find that the estimators we derived in Section~\ref{supp:sec:FST:sub:EstimatorFST} are approximately unbiased across all regimes except for the \texttt{msprime} simulations with the highest sequencing error rate, see \figref{fig:UnbiasedHudson} and \figref{fig:UnbiasedNei}. In particular, it can be observed that for larger pool sizes, the variance of the estimators reduces, as expected, as well as, to some degree, for higher read depths.
 
@@ -1508,7 +1490,9 @@ In contrast, in \figref{fig:Kofler} we find that the Kofler estimator of $\neifs
 
 Similarly, in \figref{fig:Karlsson} we find that the Karlsson estimator of $\hudsonfst$ is highly biased for small pool sizes, but otherwise performs well (again except for the case of high sequencing error).  Again, this makes sense as the Karlsson estimator implicitly assumes an infinite pool size, and so will be biased for small pool sizes.
 
-For the \texttt{msprime} simulations with the highest sequencing error rate, we see that all methods severely underestimate \fst.  It makes sense that the methods should be biased as none of the estimators account for sequencing error. In the \texttt{msprime} simulations, most sites are not segregating in the population.  Sites that are not segregating do not contribute to the true value of \fst{} -- they act as a $0$ added to each of the $\pi$'s. Calling the rate of sequencing error~$\epsilon$, all of the above estimators add something $\approx \epsilon$ over the number of sites to each of the $\widehat{\pi}$'s in expectation.  As a result, for $\neiestimator := 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$, for example, we add something on the order of $\epsilon$ to our estimates of $\widehat{\pi}_\text{within}$ and $\widehat{\pi}_\text{total}$.  This inflates $\frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$ causing us to underestimate $\neifst$.  A similar phenomenon occurs for $\hudsonestimator$, as well as the other estimators.  To see that invariant sites add $\approx\epsilon$ over the total number of sites to any of the $\widehat{\pi}$'s, consider an asymptotic regime where both the read depth and the pool size are large.  In this regime, if there were no sequencer error, the empirical frequency of each allele across reads is a very accurate estimate of the the true population allele frequency.  In particular, for invariant sites, all of the reads will show the ``0'' allele across both populations.  If we add sequencing error, then approximately $\epsilon$ proportion of the reads will show the ``1'' allele in each population.  Our estimators ignore sequencing error, and so in this case, it would look like both populations have the ``1'' allele at frequency $\epsilon$.  Naively plugging these frequencies into $\pi_\text{within}$, $\pi_\text{between}$, or $\pi_\text{total}$ we obtain $\epsilon(1-\epsilon)\approx \epsilon$.  In practice, at invariant sites, the different estimators would include various Bessel corrections, but the intuition holds, and these sites contribute approximately $\epsilon$ to the overall estimates of the different $\pi$'s.  As a result, if $\epsilon$ is comparable to or larger than any of the $\pi$'s, then any of the  estimators will be significantly biased.  Indeed, in the \texttt{msprime} simulations, we would expect $\pi_\text{within}$ to be approximately $\theta$ which is $0.001$, matching the highest sequencing error simulations, and explaining the apparent bias.  In contrast, in the ``simple'' simulations, $\pi_\text{within}$ is approximately $0.03$ which is an order of magnitude larger than the highest sequencing error simulated and hence the bias is negligible.
+For the \texttt{msprime} simulations with the highest sequencing error rate, we see that all methods severely underestimate \fst.  It makes sense that the methods should be biased, as none of the estimators account for sequencing error. In the \texttt{msprime} simulations, most sites are not segregating in the population.  Sites that are not segregating do not contribute to the true value of \fst{} -- they act as a $0$ added to each of the $\pi$'s. Calling the rate of sequencing error~$\epsilon$, all of the above estimators add something $\approx \epsilon$ over the number of sites to each of the $\widehat{\pi}$'s in expectation.  As a result, for $\neiestimator := 1 - \sfrac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$, for example, we add something on the order of $\epsilon$ to our estimates of $\widehat{\pi}_\text{within}$ and $\widehat{\pi}_\text{total}$.  This inflates $\sfrac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}$ causing us to underestimate $\neifst$.  
+
+A similar phenomenon occurs for $\hudsonestimator$, as well as the other estimators.  To see that invariant sites add $\approx\epsilon$ over the total number of sites to any of the $\widehat{\pi}$'s, consider an asymptotic regime where both the read depth and the pool size are large.  In this regime, if there were no sequencer error, the empirical frequency of each allele across reads is a very accurate estimate of the the true population allele frequency.  In particular, for invariant sites, all of the reads will show the ``0'' allele across both populations.  If we add sequencing error, then approximately $\epsilon$ proportion of the reads will show the ``1'' allele in each population.  Our estimators as introduced above ignore sequencing error, and so in this case, it would look like both populations have the ``1'' allele at frequency $\epsilon$.  Naively plugging these frequencies into $\pi_\text{within}$, $\pi_\text{between}$, or $\pi_\text{total}$ we obtain $\epsilon(1-\epsilon)\approx \epsilon$.  In practice, at invariant sites, the different estimators would include various Bessel corrections, but the intuition holds, and these sites contribute approximately $\epsilon$ to the overall estimates of the different $\pi$'s.  As a result, if $\epsilon$ is comparable to or larger than any of the $\pi$'s, then any of the  estimators will be significantly biased.  Indeed, in the \texttt{msprime} simulations, we would expect $\pi_\text{within}$ to be approximately $\theta$, which is $0.001$, matching the highest sequencing error simulations, and explaining the apparent bias.  In contrast, in the ``simple'' simulations, $\pi_\text{within}$ is approximately $0.03$ which is an order of magnitude larger than the highest sequencing error simulated and hence the bias is negligible.
 
 % We hence highly recommend to use our novel estimators over the ones implemented in \toolname{PoPoolation2}.
 
@@ -1524,7 +1508,7 @@ In the following, we present derivations of the above estimators of \fst{} that 
 
 \todo{check whether this or something similar is implemented in poolfstat! it might be important to mention this here then!}
 
-\todo{Jeff, do you think it would be worth showing the above bias plots here again, with the seq error correction? it might mean that we have to implement the equations though... not sure if needed now JPS: I think that sequencing error rates are high enough and pi tends to be low enough that they could actually mess up Fst estimates in practice.  People would probably appreciate a corrected estimate of Fst, but it's also probably not super crucial.  I guess it depends on how hard it is to implement}
+\todo{Jeff, do you think it would be worth showing the above bias plots here again, with the seq error correction? it might mean that we have to implement the equations though... not sure if needed now. JPS: I think that sequencing error rates are high enough and pi tends to be low enough that they could actually mess up Fst estimates in practice.  People would probably appreciate a corrected estimate of Fst, but it's also probably not super crucial.  I guess it depends on how hard it is to implement. LC: it's kind of a lot to implement... instead of just keeping counts or frequencies at each position, we'd have to keep track of each base with its respective quality score throughout the whole process... a lot of code refactoring! the average one could be done more easily though, I think.}
 
 % --------------------------------------
 %     Overview
@@ -1533,7 +1517,7 @@ In the following, we present derivations of the above estimators of \fst{} that 
 \subsubsection*{Overview}
 \label{supp:sec:FST:sub:HeterozygositySequencingError:sub:Overview}
 
-We will derive estimators for \piw, \pib, and \pit in the presence of sequencing error.  In the simulations above, and by a hand-wavy theoretical argument, we saw that if sequencing error is on the order of \piw, \pib, or \pit, then our estimates of $F_\text{st}$ can be severely biased.  We consider two cases: one where we have access to read-level estimates of sequencing error (e.g., phred scores), and one where we just have access to an estimate of the average sequencing error rate.  Since the second is a special case of the first (i.e., we can just assume all reads have the same sequencing error), it will follow straightforwardly but will simplify some formulas.
+We will derive estimators for \piw, \pib, and \pit in the presence of sequencing error.  In the simulations above, and by a hand-wavy theoretical argument, we saw that if sequencing error is on the order of \piw, \pib, or \pit, then our estimates of $F_\text{ST}$ can be severely biased.  We consider two cases: one where we have access to read-level estimates of sequencing error (e.g., phred scores), and one where we just have access to an estimate of the average sequencing error rate.  Since the second is a special case of the first (i.e., we can just assume all reads have the same sequencing error), it will follow straightforwardly but will simplify some equations.
 
 One interesting and important observation to note here is that when we did not account for sequencing error, our estimates of \piw, \pib, and \pit were all zero for monomorphic (non-segregating) sites.  This allowed us to sum the estimates of \piw, \pib, and \pit across only segregating sites and then divide by the total number of sites (both segregating and non-segregating).  We will see that once we account for sequencing error, monomorphic sites actually contribute a small amount to \piw, \pib, and \pit, as there will now be an \emph{additive} bias correction in addition to a multiplicative one.  As such, when computing \piw, \pib, or \pit in a window, we will need to sum across segregating sites and then add a term that is the number of non-segregating sites times the estimate of \piw, \pib, or \pit for a non-segregating sites, and then finally divide that whole expression by the total number of sites.
 
@@ -1665,14 +1649,14 @@ is unbiased for \pit.
 \subsubsection*{Constant error rates}
 \label{supp:sec:FST:sub:HeterozygositySequencingError:sub:ConstErr}
 
-If we assume that all reads have the same error rates, say $\epsilon$, then $\overline{\epsilon} = \epsilon$, $\overline{\epsilon^2} = \epsilon^2$, and $\epsilon^* = \frac{c-1}{c}\epsilon^2$.  Otherwise the formulas remain unchanged.
+If we assume that all reads have the same error rates, say $\epsilon$, then $\overline{\epsilon} = \epsilon$, $\overline{\epsilon^2} = \epsilon^2$, and $\epsilon^* = \frac{c-1}{c}\epsilon^2$.  Otherwise, the equations remain unchanged.
 
 % ------------------------------------------------------------------------------------------------------
 %          PoPoolation2 Equations Document
 % ------------------------------------------------------------------------------------------------------
 % \todo{(Moi) I think is fine to just say this and not go through equations ;) }
 
-\section{PoPoolation2 Equations Document}
+\section{PoPoolation Equations Document}
 \label{supp:sec:PoPoolation2Equations}
 
 The PoPoolations equation document also presents some simplifications and related equations that to the best of our knowledge are not implemented in their software.
