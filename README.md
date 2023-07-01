@@ -12,8 +12,8 @@ Versions of this document have been used as supplements in:
 
 and
 
-> **grenedalf: population genetic statistics for the next generation of pool sequencing.**</br>
-> Lucas Czech, Jeffrey P. Spence, and Moisés Expósito-Alonso.</br>
-> *manuscript in preparation*
+> **grenedalf: population genetic statistics for the next generation of pool sequencing.**<br />
+> Lucas Czech, Jeffrey P. Spence, Moisés Expósito-Alonso.<br />
+> arXiv, 2023. [arXiv:2306.11622](https://arxiv.org/abs/2306.11622)
 
 For the scripts and tests to evaluate the equations and produce the plots shown in this document, see [grenedalf-paper](https://github.com/lczech/grenedalf-paper).
