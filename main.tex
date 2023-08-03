@@ -350,7 +350,7 @@ We first define the input that we assume to be given for all subsequent equation
 In the software implementation of the equations, these are based on the input data, or set by the user as parameters.
 
 $\samplesize$ :
-Pool size, provided by the user. This is the number of individuals that were pooled together for the sequencing of a population.
+Pool size, as given in the dataset (and in the software, provided by the user). This is the number of individuals (haplotypes) that were pooled together for the sequencing of a population. Note on the pool size for different levels of ploidy:  The pool sequencing approach assumes the pool size to be the number of distinct haplotypes in the population that have been sampled. Hence, for instance for 100 diploid individuals, the number of haplotypes (and hence the pool size) is 200.
 
 $\coverage$ :
 Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. 
@@ -974,7 +974,7 @@ Note that $\tilde{n}$ is bounded by both $n$ and $c$, meaning that $\forall n \g
     \label{eq:NTildeBounds}
      \tilde{n} \leq n \qquad\mbox{and}\qquad \tilde{n} \leq c
 \end{align}
-The first inequality follows readily from the fact that $(\frac{n-1}{n})^c \ge 0$. \\
+The first inequality follows readily from the fact that $0 \le (\frac{n-1}{n})^c \le 1$. \\
 The second inequality can be shown using Bernoulli's inequality:
 \begin{align}
      \left( \frac{n-1}{n} \right)^c = \left(1 - \frac{1}{n} \right)^c \geq 1 - \frac{c}{n}
@@ -1270,9 +1270,12 @@ We will show below that the following are unbiased estimators of the correspondi
     \widehat{\pi}_\text{within} &:=
         \frac{1}{2}
         \Bigg[                                 \left( \frac{n_{(1)}}{n_{(1)}-1} \right) \left( \frac{\coverage_{(1)}}{\coverage_{(1)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(1)}^2 \right) \Bigg. \\
+    \label{eq:Fst:UnbiasedPiWithin}
         \Bigg. &+ \phantom{\frac{1}{2} \Bigg[} \left( \frac{n_{(2)}}{n_{(2)}-1} \right) \left( \frac{\coverage_{(2)}}{\coverage_{(2)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(2)}^2 \right) \Bigg] \\
+    \label{eq:Fst:UnbiasedPiBetween}
     \widehat{\pi}_\text{between} &:=
         1 - \sum_{\tau} \empfreq_{\tau(1)}\empfreq_{\tau(2)} \\
+    \label{eq:Fst:UnbiasedPiTotal}
     \widehat{\pi}_\text{total} &:=
         \frac{1}{2}\widehat{\pi}_\text{within} + \frac{1}{2}\widehat{\pi}_\text{between}
 \end{align}
@@ -1317,6 +1320,25 @@ showing that $\widehat{\pi}_\text{between}$ is unbiased for $\pi_\text{between}$
 \label{supp:sec:FST:sub:EstimatorsPi:sub:PiTotal}
 
 That $\widehat{\pi}_\text{total}$ is unbiased for $\pi_\text{total}$ follows immediately from the definition of $\pi_\text{total}$ in \eqnref{eq:PiDefs:PiTotal} and the unbiasedness of $\widehat{\pi}_\text{within}$ and $\widehat{\pi}_\text{between}$.
+
+% --------------------------------------------------------
+%          Intuition about the equations
+% --------------------------------------------------------
+
+\subsubsection*{Intuition and Reasoning}
+\label{supp:sec:FST:sub:EstimatorsPi:sub:Intuition}
+
+In the above equations, for each of the two populations, we apply a double Bessel's correction for our estimate of $\widehat{\pi}_\text{within}$ in \eqnref{eq:Fst:UnbiasedPiWithin}, to correct for the elevated variance that comes from the double sampling process of picking individuals from a population, and of picking reads from those individuals (during sequencing). Because in both steps, we pick finite numbers, resulting in higher variance in the estimates, which hence needs correcting. 
+
+However, the estimate of $\widehat{\pi}_\text{between}$ in \eqnref{eq:Fst:UnbiasedPiBetween} does not have those corrections. One way to gain some intuition about why the Bessle's corrections are not needed in that case is as follows.
+
+One way to think about $\pi$ in a single population is as the probability to get different alleles when picking two random haploids from the population.  In a large population, it does not matter whether we pick those two haploids with replacement or without replacement: in that case, even if we pick the two haploids with replacement, it is unlikely that we would happen to pick the same haploid twice.  In that sense, $\pi$ is measuring the probability that two different haploids have different alleles.  
+ 
+Now, to estimate the population-level $\pi_\text{within}$, we could look at a smaller sample of haploids, and calculate the probability that two randomly chosen haploids have different alleles. However, if our sample size is small, then the difference between sampling with or without replacement becomes relevant, because there is a $\sfrac{1}{n}$ chance that we pick the same haploid twice if we are sampling with replacement. If we pick the same haploid twice, they obviously cannot have different alleles.  This means that if we compute our probabilities by sampling with replacement, then we underestimate by a factor of $1 - \sfrac{1}{n} = \frac{n-1}{n}$ because in $\sfrac{1}{n}$ of our comparisons we are actually comparing a haplotype to itself.  As a result, we would need to multiply our estimate by $\frac{n}{n-1}$ to undo this underestimation.  Something similar happens again when we move to pool sequencing, where our equations are (implicitly) in terms of sampling with replacement, but now we are sampling reads, and so we end up (by the same argument) with needing to multiply by a factor of $\frac{c}{c-1}$.  
+
+This however is different in the case of $\pi_\text{between}$.  In that case, we are comparing a haploid from one population to a haploid from a different population.  Hence, we are comparing a single haploid (or single read) from one population to a single haploid (or read) from another population.  If we only draw a single sample, then there is no difference between sampling with or without replacement, and so our equations (which again are implicitly based on sampling with replacement) do not need to be corrected to match the idea of sampling without replacement.  
+
+In summary, when considering two entities at a time from the same pool/population, we need to include Bessel's corrections such as for pool size and read coverage. However, if we are only considering one entity at a time from each pool/population, then we do not need those corrections.
 
 % ------------------------------------------------------------------------------------------------------
 %          Estimating FST
