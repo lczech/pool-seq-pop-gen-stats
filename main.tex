@@ -284,7 +284,7 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \fbox{%
   \parbox{48em}{
         \large
-        \textbf{Version: 2023-06-19}
+        \textbf{Version: 2023-09-12}
         \\ \\
         The latest version of this document can be found at %\\
         \url{https://github.com/lczech/pool-seq-pop-gen-stats}
@@ -699,14 +699,14 @@ Reasoning the same as above, we get the expected value of $\widehat{\theta}_w$ a
         with the two probability terms again as in \eqnref{eq:PSNP} and \eqnref{eq:Pmcn}, thus leading to
     }
     \label{eq:ExpectationThetaW}
-    &= \theta\sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+    &= \frac{1}{a_1(n-1)} \cdot \theta\sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
 \end{align}
 %
 To accommodate different coverage levels throughout the genome, denote the set of different coverage levels as $\mathcal{C}$, and the set of sites with coverage $c$ as $\mathcal{S}_c$. Equation~\ref{eq:ExpectationThetaW} immediately suggests the following unbiased estimator, which we denote $\widehat{\theta}_{w, \text{pool}}$:
 %
 \begin{align}
     \label{eq:CorrectedThetaEstimate}
-    \widehat{\theta}_{w, \text{pool}} &:= \frac{1}{\text{\# sites} \cdot a_1(n-1)}\sum_{c \in \mathcal{C}}
+    \widehat{\theta}_{w, \text{pool}} &:= \frac{1}{\text{\# sites}} \cdot \sum_{c \in \mathcal{C}}
     \frac{
         \sum_{\ell \in \mathcal{S}_c} S_b(\ell)
     }{
@@ -891,9 +891,10 @@ Note that these equations were originally developed for data from individuals,
 and hence here, $n$ denotes the number of individuals \emph{as if} we were doing individual sequencing.
 
 NB: The \toolname{PoPoolation} document recommends to counter-check the correctness of their equation with the original of \citeay{Achaz2008}.
-In fact, \toolname{PoPoolation}  introduced a slight mistake in the last term of $\beta^*$,
+In fact, \toolname{PoPoolation}  introduced a mistake in the last term of $\beta^*$,
 which we have fixed here. Above is the (hopefully) correct one, following \citeay{Achaz2008}.
 Note that the mistake only concerns the \toolname{PoPoolation}  equations document, but not their implementation.
+However, in their implementation, \toolname{PoPoolation} instead has a slight mistake in the first term of $\beta^*$, which should not have a significant effect on the computed value though.
 
 \popoolissue{The above is indeed not a big one, but we thought it's good to mention it.}
 
@@ -1464,7 +1465,7 @@ We here briefly also go through the derivation.
 We here call this estimator using the superscript ``Karlsson'', which is again defined for two subpopulations denoted with subscripts $(1)$ and $(2)$.
 % We expect poolsizes $n >= 2$.
 We are here only looking at biallelic SNPs.
-Instead of $\tau$ for the four nucleotides, we hence use $u$ for the frequency of the major allele and $v$ for the frequency of the minor allele.  We will also use $\widehat{u}$ and $\widehat{v}$ as the corresponding empirical estimates of $u$ and $v$ (\ie the number of reads supporting the major or minor allele divided by the coverage).
+Instead of $\tau$ for the four nucleotides, we hence use $q$ for the frequency of the major (reference) allele and $p$ for the frequency of the minor (alternative) allele.  We will also use $\widehat{q}$ and $\widehat{p}$ as the corresponding empirical estimates of $q$ and $p$ (\ie the number of reads supporting the major or minor allele divided by the coverage).
 
 We start with the definition of $\text{F}_\text{ST}^\text{Karlsson}$ from Karlsson \textit{et al.} for the SNPs in a window $W$:
 
@@ -1477,11 +1478,11 @@ where the the numerator $N_k$ and denominator $D_k$ for a single site $k$ in $W$
 
 \begin{align}
     \label{eq:FstNk}
-    N_k &= v_{(1)} \cdot ( u_{(2)} - u_{(1)} ) ~+~ v_{(2)} \cdot ( u_{(1)} - u_{(2)} ) \\
+    N_k &= p_{(1)} \cdot ( q_{(2)} - q_{(1)} ) ~+~ p_{(2)} \cdot ( q_{(1)} - q_{(2)} ) \\
     \label{eq:FstDk}
     \nonumber
-    D_k &= v_{(1)} u_{(2)} + u_{(1)} v_{(2)} \\
-        &= N_k + v_{(1)} u_{(1)} + v_{(2)} + u_{(2)}.
+    D_k &= p_{(1)} q_{(2)} + q_{(1)} p_{(2)} \\
+        &= N_k + p_{(1)} q_{(1)} + p_{(2)} q_{(2)}.
 \end{align}
 
 It is not obvious, but follows from simple algebra that this definition is equivalent to $ \text{F}_\text{ST}^\text{Hudson} $ defined above.
@@ -1490,14 +1491,14 @@ These are estimated as follows, using the numerator $\hat{N}_k$ and denominator 
 
 \begin{align}
     \label{eq:FstKnh}
-    \widehat{N}_k &= \left( \widehat{u}_{(1)} - \widehat{u}_{(2)} \right)^2 - \left( \frac{h_{(1)}}{\coverage_{(1)}} + \frac{h_{(2)}}{\coverage_{(2)}} \right) \\
+    \widehat{N}_k &= \left( \widehat{q}_{(1)} - \widehat{q}_{(2)} \right)^2 - \left( \frac{h_{(1)}}{\coverage_{(1)}} + \frac{h_{(2)}}{\coverage_{(2)}} \right) \\
     \label{eq:FstKdh}
     \widehat{D}_k &= \widehat{N}_k + h_{(1)} + h_{(2)}
     \intertext{with two additional helpers:}
     \nonumber
-    h_{(1)} &= \frac{\coverage_{(1)}}{(\coverage_{(1)}-1)}\widehat{u}_{(1)}\widehat{v}_{(1)} \\
+    h_{(1)} &= \frac{\coverage_{(1)}}{(\coverage_{(1)}-1)}\widehat{q}_{(1)}\widehat{p}_{(1)} \\
     \nonumber
-    h_{(2)} &= \frac{\coverage_{(2)}}{(\coverage_{(2)}-1)}\widehat{u}_{(2)} \widehat{v}_{(2)}
+    h_{(2)} &= \frac{\coverage_{(2)}}{(\coverage_{(2)}-1)}\widehat{q}_{(2)} \widehat{p}_{(2)}
     \end{align}
 
 And finally, these are used to define estimator $\widehat{\text{F}}_\text{ST}^\text{Karlsson}$ for a window $W$:
@@ -1511,7 +1512,7 @@ According to Karlsson \textit{et al.}, when the coverages $\coverage_{(1)}$ and 
 Karlsson \textit{et al.} further state that by the Lehmann-Scheff\'{e} theorem \cite[Theorem 4.2.2]{Bickel1977}, it follows that $\widehat{N}_k$ and $\widehat{D}_k$ are uniformly minimum variance unbiased estimators of $N_k$ and $D_k$, respectively, and hence conclude that their estimator \^{F}\textsubscript{ST,K} is also asymptotically unbiased.
 
 This estimator is very similar (after some algebra) to our $\widehat{\text{F}}_\text{ST}^\text{Hudson}$.
-It however assumes the pool size to be infinite, that is, it is missing the various corrections for pool size.
+It however assumes the pool size to be infinite, that is, it is missing the corrections for pool size.
 
 % ------------------------------------------------------------------------------------------------------
 %          Comparison of the Estimators and their Biases
