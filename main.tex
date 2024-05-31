@@ -169,7 +169,7 @@
 \newcommand\secref[1]{Section~\ref{#1}}
 
 \newcommand{\samplesize}{n}
-\newcommand{\coverage}{c}
+\newcommand{\readdepth}{c}
 \newcommand{\empfreq}{\widehat{f}}
 \newcommand{\thetapi}{\widehat{\theta_\pi}}
 \newcommand{\watterson}{\widehat{\theta_\text{W}}}
@@ -233,7 +233,7 @@
 % Title Page
 \title{Pool-Sequencing corrections for population genetic statistics}
 % \subtitle{Genesis and Gappa: Library and Toolkit for \\Working with Phylogenetic (Placement) Data.}
-\author{\orcid{0000-0002-1340-9644}Lucas Czech\textsuperscript{a,*}, \orcid{0000-0002-3199-1447}Jeffrey P. Spence\textsuperscript{b}, and \orcid{0000-0001-5711-0700}Moisés Expósito-Alonso\textsuperscript{a,c,d,*}}
+\author{\orcid{0000-0002-1340-9644}Lucas Czech\textsuperscript{a,b,*}, \orcid{0000-0002-3199-1447}Jeffrey P. Spence\textsuperscript{c}, and \orcid{0000-0001-5711-0700}Moisés Expósito-Alonso\textsuperscript{a,d,e,f,g,*}}
 \date{}
 
 % ######################################################################################################################
@@ -259,9 +259,12 @@
 % \href{mailto:moisesexpositoalonso@gmail.com}{moisesexpositoalonso@gmail.com},
 % \href{mailto:luc@s-cze.ch}{luc@s-cze.ch}
 \textsuperscript{a}{Department of Plant Biology, Carnegie Institution for Science, Stanford, USA.\\}
-\textsuperscript{b}{Department of Genetics, Stanford University, Stanford, USA.\\}
-\textsuperscript{c}{Department of Biology, Stanford University, Stanford, USA.\\}
-\textsuperscript{d}{Department of Global Ecology, Carnegie Institution for Science, Stanford, USA.\\}
+\textsuperscript{b}{Section for GeoGenetics, Globe Institute, University of Copenhagen, Denmark.\\}
+\textsuperscript{c}{Department of Genetics, Stanford University, Stanford, USA.\\}
+\textsuperscript{d}{Department of Biology, Stanford University, Stanford, USA.\\}
+\textsuperscript{e}{Department of Global Ecology, Carnegie Institution for Science, Stanford, USA.\\}
+\textsuperscript{f}{Department of Integrative Biology, University of California Berkeley, Berkeley, USA.\\}
+\textsuperscript{g}{Howard Hughes Medical Institute, University of California Berkeley, Berkeley, USA.\\}
 \textsuperscript{*}{To whom correspondence should be addressed: \href{mailto:lczech@carnegiescience.edu}{\color{black}{lczech@carnegiescience.edu}},
 % \href{mailto:jspence@stanford.edu}{\color{black}{jspence@stanford.edu}}, 
 and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalonso@gmail.com}}}
@@ -284,13 +287,14 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \fbox{%
   \parbox{48em}{
         \large
-        \textbf{Version: 2023-09-12}
+        \textbf{Version: 2024-05-30}
         \\ \\
         The latest version of this document can be found at %\\
         \url{https://github.com/lczech/pool-seq-pop-gen-stats}
         \\
         When citing this document or equations in it, %\\
-        we recommend to also mention the version, as section and equation numbering might change.
+        we recommend to also mention the version,
+        as section and equation numbering might change.
   }%
 }
 \vspace*{2em}
@@ -299,7 +303,7 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \label{supp:sec:Abstract}
 
 This document describes our assessment of the specific pool-sequencing (Pool-seq) equations for population genetic measures of diversity (such as $\theta_\pi$, $\theta_\text{Watterson}$, Tajima's $D$), and differentiation (such as $\mathfst$).
-The aim of these equations is to correct for the noises of pool sequencing, specifically limited sample size (number of individuals pooled, or pool size~$\samplesize$) and limited coverage (number of reads obtained from those individuals, or coverage $\coverage$).
+The aim of these equations is to correct for the noises of pool sequencing, specifically limited sample size (number of individuals pooled, or pool size~$\samplesize$) and limited read depth (number $\readdepth$ of reads obtained from those individuals that cover a given locus).
 
 We re-render some approaches originally presented and implemented in \toolname{PoPoolation} \cite{Kofler2011a} and \toolname{PoPoolation2} \cite{Kofler2011b}, as well as other publications.  We re-derive estimators of genetic diversity, and suggest some improvements that fix standing issues when working with Pool-seq data. Furthermore, we (re-)derive two consistent (asymptotically unbiased) estimators for \fst{} for pool sequencing data, using two distinct definitions of \fst{}, that correct for both sources of noise mentioned above.  We also evaluate the different estimators for \fst{} here using simulated data, showing their particular biases.  Lastly, we derive novel estimators for \fst{} that additionally take sequencing error into account.  
 
@@ -352,9 +356,15 @@ In the software implementation of the equations, these are based on the input da
 $\samplesize$ :
 Pool size, as given in the dataset (and in the software, provided by the user). This is the number of individuals (haplotypes) that were pooled together for the sequencing of a population. Note on the pool size for different levels of ploidy:  The pool sequencing approach assumes the pool size to be the number of distinct haplotypes in the population that have been sampled. Hence, for instance for 100 diploid individuals, the number of haplotypes (and hence the pool size) is 200.
 
-$\coverage$ :
-Observed coverage. This is the number of reads sequenced from the pool that span a focal position in the genome. 
-% \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?  Yes and no -- throughout we assume that it is not random, which is fine -- the randomness in the coverage is ancillary (\url{https://en.wikipedia.org/wiki/Ancillary_statistic}) to the estimation of the frequencies, and so in some sense it's uninteresting / unimportant whether it's random or not.}
+$\readdepth$ :
+Observed read depth: The number of reads sequenced from the pool at a focal position in the genome. This is the main data that we are using. NB: In PoPoolation, npstat, as well as previous versions of this document (up until, and including, version 2023-09-12), this is called ``coverage'' instead of read depth. This term however is ambiguous and can both mean ``coverage depth'' (number of reads at each base of the genome) and ``coverage breadth'' (proportion of the genome that is covered by reads).
+% \todo{this being a sum of Cs, isn't that also a random variable, and should be captialized?  Yes and no -- throughout we assume that it is not random, which is fine -- the randomness in the read depth is ancillary (\url{https://en.wikipedia.org/wiki/Ancillary_statistic}) to the estimation of the frequencies, and so in some sense it's uninteresting / unimportant whether it's random or not.}
+
+% Depth of Coverage (Read Depth):
+% This is the average number of reads that align to, or "cover," each base in the sequenced genome. For example, 30x coverage means that, on average, each base is read 30 times.
+
+% Breadth of Coverage:
+% This refers to the proportion of the target genome that is covered by sequencing reads. For instance, if 95% of the genome is covered by at least one read, the breadth of coverage is 95%.
 
 $b$ :
 Minimum allele count, provided by the user.
@@ -362,7 +372,7 @@ We do not want to consider SNPs with fewer than $b$ alternative reads in the dat
 Note that we assume $b$ to be a user-provided constant,
 and hence leave it out of (most) function arguments for simplicity.
 
-For most equations we will consider a single pool sequencing sample (one population, or one experiment), but in cases where we consider multiple samples (multiple pool-sequenced populations), we will denote the different samples with subscripts in parentheses, such as $\samplesize_{(1)}, \samplesize_{(2)},\ldots$ or $\coverage_{(1)}, \coverage_{(2)}, \ldots$ to denote different populations or experiments.
+For most equations we will consider a single pool sequencing sample (one population, or one experiment), but in cases where we consider multiple samples (multiple pool-sequenced populations), we will denote the different samples with subscripts in parentheses, such as $\samplesize_{(1)}, \samplesize_{(2)},\ldots$ or $\readdepth_{(1)}, \readdepth_{(2)}, \ldots$ to denote different populations or experiments.
 
 Beyond these data-specific and user-specified parameters, we will use the following notation.  In general, we will use capital letters for random variables in our model of pool sequencing, which will be described shortly in \secref{supp:sec:model}.  We will also differentiate sample quantities (\ie those that are computed from data) from their population counterparts (\ie parameters that describe the population from which the data were sampled) with hats.  For example, we differentiate the frequency of the $A$ allele in the whole population, $f_A$, from the empirical frequency of $A$ nucleotides in our pool sequencing sample, $\empfreq_A$.
 
@@ -372,13 +382,13 @@ Index over nucleotides, with $\tau \in \left\{ \text{A}, \text{C}, \text{G}, \te
 $C_\tau$ :
 Nucleotide counts, \ie how many reads have a certain nucleotide $\tau$ at a given position in the genome. Note that we generally do not make assumptions about the focal position in the genome being biallelic, unless stated otherwise.
 
-$\coverage = \sum_\tau C_\tau$ : The (total) coverage at a given position.
+$\readdepth = \sum_\tau C_\tau$ : The (total) read depth at a given position.
 
 $f_\tau$ :
 Nucleotide frequencies in the population, \ie the proportion of haplotypes that have nucleotide $\tau$ at the focal position.
 
 $\empfreq_\tau$ :
-Empirical nucleotide frequencies, \ie $\empfreq_\tau := C_\tau / \coverage$. Naturally, $\sum_\tau \empfreq_\tau = 1$.
+Empirical nucleotide frequencies, \ie $\empfreq_\tau := C_\tau / \readdepth$. Naturally, $\sum_\tau \empfreq_\tau = 1$.
 %\sfrac{c_\tau}{C}$
 
 % $p$, $q$ :
@@ -386,7 +396,7 @@ Empirical nucleotide frequencies, \ie $\empfreq_\tau := C_\tau / \coverage$. Nat
 % just use $p$ for the frequency of the reference allele, and $q$ for the frequency of the alternative allele.
 
 $m$ :
-Index of summation over potential levels of coverage $\coverage$.
+Index of summation over potential levels of read depth $\readdepth$.
 
 $k$ :
 Index of summation over potential pool sizes $\samplesize$.
@@ -420,7 +430,7 @@ We consider a simple model of pool sequencing as a series of multinomial samplin
 
 \begin{align*}
 (N_A, N_C, N_G, N_T) &\sim \text{Multinomial}\left(\samplesize, (f_A, f_C, f_G, f_T)\right)\\
-(C_A, C_C, C_G, C_T) | (N_A, N_C, N_G, N_T) &\sim \text{Multinomial}\left(\coverage, \left(\frac{N_A}{\samplesize}, \frac{N_C}{\samplesize},\frac{N_G}{\samplesize},\frac{N_T}{\samplesize}\right)\right)
+(C_A, C_C, C_G, C_T) | (N_A, N_C, N_G, N_T) &\sim \text{Multinomial}\left(\readdepth, \left(\frac{N_A}{\samplesize}, \frac{N_C}{\samplesize},\frac{N_G}{\samplesize},\frac{N_T}{\samplesize}\right)\right)
 \end{align*}
 
 Throughout, we will repeatedly make use of the following results:
@@ -429,7 +439,7 @@ Throughout, we will repeatedly make use of the following results:
 \end{align}
 and
 \begin{align}
-\mathbb{E}\left[\left(\frac{\coverage}{\coverage-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right)\left(1-\sum_\tau\empfreq_\tau^2\right)\right] = 1-\sum_\tau f_\tau^2. \label{eq:hetunbiased}
+\mathbb{E}\left[\left(\frac{\readdepth}{\readdepth-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right)\left(1-\sum_\tau\empfreq_\tau^2\right)\right] = 1-\sum_\tau f_\tau^2. \label{eq:hetunbiased}
 \end{align}
 
 To see Equation~\ref{eq:frequnbiased} we can use the tower property:
@@ -452,9 +462,9 @@ Therefore,
 
 We can now make use of this result twice along with the tower property to obtain Equation~\ref{eq:hetunbiased}:
 \begin{align*}
-\mathbb{E}\left[\left(\frac{\coverage}{\coverage-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right)\left(1-\sum_\tau\empfreq_\tau^2\right)\right] &= \sum_\tau\left(\frac{\coverage}{\coverage-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \mathbb{E}\left[\empfreq_\tau(1-\empfreq_\tau)\right]\\
-&=  \sum_\tau\left(\frac{\coverage}{\coverage-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \left(\frac{1}{\coverage^2}\right) \mathbb{E}\left[C_\tau\left(c-C_\tau\right)\right]\\
-&= \sum_\tau\left(\frac{1}{\coverage(\coverage-1)}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \mathbb{E}\left[\mathbb{E}\left[C_\tau\left(c-C_\tau\right) \mid N_\tau\right]\right]\\
+\mathbb{E}\left[\left(\frac{\readdepth}{\readdepth-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right)\left(1-\sum_\tau\empfreq_\tau^2\right)\right] &= \sum_\tau\left(\frac{\readdepth}{\readdepth-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \mathbb{E}\left[\empfreq_\tau(1-\empfreq_\tau)\right]\\
+&=  \sum_\tau\left(\frac{\readdepth}{\readdepth-1}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \left(\frac{1}{\readdepth^2}\right) \mathbb{E}\left[C_\tau\left(c-C_\tau\right)\right]\\
+&= \sum_\tau\left(\frac{1}{\readdepth(\readdepth-1)}\right)\left(\frac{\samplesize}{\samplesize-1}\right) \mathbb{E}\left[\mathbb{E}\left[C_\tau\left(c-C_\tau\right) \mid N_\tau\right]\right]\\
 &= \sum_\tau\left(\frac{\samplesize}{\samplesize-1}\right) \mathbb{E}\left[\frac{N_\tau}{\samplesize}\left(1-\frac{N_\tau}{\samplesize}\right)\right]\\
 &= \sum_\tau\frac{1}{\samplesize(\samplesize-1)}\mathbb{E}\left[N_\tau\left(\samplesize - N_\tau\right)\right]\\
 &= \sum_\tau f_\tau(1-f_\tau) = 1 - \sum_\tau f_\tau^2.
@@ -495,7 +505,7 @@ Below we derive PoPoolation's estimator of pairwise heterozygosity, $\thetapi$, 
 PoPoolation begins by defining %
 \begin{align}
     \label{eq:ThetaPiFreq2}
-    \thetapi^{\samplesize\to\infty} &:= \frac{\coverage}{\coverage-1} \left(1 - \sum_\tau \empfreq_\tau^2 \right),
+    \thetapi^{\samplesize\to\infty} &:= \frac{\readdepth}{\readdepth-1} \left(1 - \sum_\tau \empfreq_\tau^2 \right),
 \end{align}
 %
 which is equal to the left hand side of Equation~\ref{eq:hetunbiased} up to a factor of $\frac{\samplesize}{\samplesize-1}$.  This indicates that this is a biased estimator of the heterozygosity at this site, but the bias is on the order of $O\left(\frac{1}{\samplesize}\right)$, which means that PoPoolation assumes an extremely large pool size, which is why we use the $\samplesize\to\infty$ superscript.
@@ -522,16 +532,16 @@ The approach that PoPoolation takes is to assume neutrality and an equilibrium d
 To begin, we compute the expectation of $\thetapi^{\samplesize\to\infty}$ when we treat sites with fewer than $b$ reads supporting the minor allele as not contributing to $\thetapi^{\samplesize\to\infty}$.  Since we are assuming that we are only looking at biallelic sites, we will use $M$ to denote the number of reads supporting the derived allele.  Letting $\mathcal{E}_b$ be the event that at least $b$ reads support the minor allele, we see
 %
 \begin{align}
-\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right] &= \sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}(M = m)\\
-&= \mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\coverage-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)\\
-&=  2\mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
+\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right] &= \sum_{m=b}^{\readdepth-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}(M = m)\\
+&= \mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\readdepth-b} \mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mid M=m \right] \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)\\
+&=  2\mathbb{P}\left(\text{Site is a SNP}\right)\sum_{m=b}^{\readdepth-b} \frac{m(\readdepth-m)}{\readdepth(\readdepth-1)} \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
 \label{eq:ExpectationThetaPi}
 % \mathbb{E}(\theta_\pi|C) &= P(\mbox{SNP} | n) \cdot \sum_{m=b}^{C-b} \frac{2m (C-m)}{C(C-1)} \cdot P(m|C,n)
 % \\
 % &= P(\mbox{SNP} | n) \cdot \frac{2}{C(C-1)} \cdot \sum_{m=b}^{C-b} m(C-m) \cdot P(m|C,n)
 \end{align}
 %
-In words, the expected value is computed by summing all possible SNP counts (that exceed the minimum count $b$) that can occur in a pool with coverage $\coverage$, weighted by the probability to have each of those counts.  As we are using the derived allele count $m$ in the equation above, and either the derived or ancestral allele could be the minor allele, we ``sandwich'' our potential values for the coverage between $b$ and $\coverage-b$.
+In words, the expected value is computed by summing all possible SNP counts (that exceed the minimum count $b$) that can occur in a pool with read depth $\readdepth$, weighted by the probability to have each of those counts.  As we are using the derived allele count $m$ in the equation above, and either the derived or ancestral allele could be the minor allele, we ``sandwich'' our potential values for the read depth between $b$ and $\readdepth-b$.
 
 The two probabilities used above are computed as follows.
 
@@ -544,7 +554,7 @@ $\mathbb{P}\left(\text{Site is a SNP}\right)$ is the probability of observing a 
 
 where the final approximation ignores terms on the order of  $\theta_\pi^2$, which implicitly assumes that the mutation rate is small.
 
-$\mathbb{P}\left(M = m \mid \text{ Site is a SNP }\right)$ is the probability of observing $m$ as the derived allele count in a SNP with $\coverage$ reads from a pool of $n$ individuals.  We can further break this down by conditioning on the number of individuals in the pool that have the derived allele, which we will call $\widetilde{M}$:
+$\mathbb{P}\left(M = m \mid \text{ Site is a SNP }\right)$ is the probability of observing $m$ as the derived allele count in a SNP with $\readdepth$ reads from a pool of $n$ individuals.  We can further break this down by conditioning on the number of individuals in the pool that have the derived allele, which we will call $\widetilde{M}$:
 %
 \begin{align}
     \label{eq:Pmcn}
@@ -559,7 +569,7 @@ Finally, $ \mathbb{P}\left(M=m \mid \widetilde{M} = k\right)$ is the probability
 %
 \begin{align}
     \label{eq:Pmcnk}
-     \mathbb{P}\left(M=m \mid \widetilde{M} = k\right) &= \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+     \mathbb{P}\left(M=m \mid \widetilde{M} = k\right) &= \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
 \end{align}
 %
 In words, this follows a binomial distribution, with $m$ successes out of $c$ trials
@@ -572,12 +582,12 @@ Starting from \eqnref{eq:ExpectationThetaPi}, we can now put this together:
 %
 \begin{align}
 \nonumber
-\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right]  &=2\theta_\pi \sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+\mathbb{E}\left[\thetapi^{\samplesize\to\infty} \mathbb{I}\left\{\mathcal{E}_b\right\}\right]  &=2\theta_\pi \sum_{m=b}^{\readdepth-b} \frac{m(\readdepth-m)}{\readdepth(\readdepth-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
 \end{align}
 
 This shows that if we use our estimator $\thetapi^{\samplesize\to\infty}$ but treat as zero sites where the minor allele is not supported by at least $b$ reads, then the estimate will be biased by a factor of
 \[
-2\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+2\sum_{m=b}^{\readdepth-b} \frac{m(\readdepth-m)}{\readdepth(\readdepth-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
 \]
 
 which we will now use to eliminate said bias.
@@ -592,7 +602,7 @@ which we will now use to eliminate said bias.
 \subsubsection*{Unbiased estimate of $\theta_\pi$ when restricting to sites with at least $b$ minor allele reads}
 \label{supp:sec:ThetaPi:sub:PoolSequencing:sub:FinalApprox}
 
-Based on the previous section, we can construct an unbiased estimator for $\theta_\pi$ when restricting to sites with at least $b$ reads supporting the minor allele, which we denote by $\widehat{\theta}_{\pi,\text{pool}}$.  Let $\mathcal{S}_{bc}$ be the set of sites where the coverage is $c$, and at least $b$ reads support the minor allele, and let $\thetapi^{\samplesize\to\infty}(\ell)$ be the above estimator evaluated at the $\ell^\text{th}$ site (where above we suppressed the dependence on site because we only considered one site at a time).  Finally, let $\mathcal{C}$ denote the set of distinct observed coverage levels across the genome.  We then define  $\widehat{\theta}_{\pi,\text{pool}}$ as
+Based on the previous section, we can construct an unbiased estimator for $\theta_\pi$ when restricting to sites with at least $b$ reads supporting the minor allele, which we denote by $\widehat{\theta}_{\pi,\text{pool}}$.  Let $\mathcal{S}_{bc}$ be the set of sites where the read depth is $c$, and at least $b$ reads support the minor allele, and let $\thetapi^{\samplesize\to\infty}(\ell)$ be the above estimator evaluated at the $\ell^\text{th}$ site (where above we suppressed the dependence on site because we only considered one site at a time).  Finally, let $\mathcal{C}$ denote the set of distinct observed read depth levels across the genome.  We then define  $\widehat{\theta}_{\pi,\text{pool}}$ as
 %
 \begin{align}
     \label{eq:ThetaPiPoolEstimate}
@@ -600,16 +610,16 @@ Based on the previous section, we can construct an unbiased estimator for $\thet
     \frac{
        \sum_{\ell \in \mathcal{S}_{bc}} \thetapi^{\samplesize\to\infty}(\ell)
     }{
-        2\sum_{m=b}^{\coverage-b} \frac{m(\coverage-m)}{\coverage(\coverage-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+        2\sum_{m=b}^{\readdepth-b} \frac{m(\readdepth-m)}{\readdepth(\readdepth-1)} \sum_{k=1}^{n-1} \frac{1}{k} \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
 %         \sum_{k=1}^{n-1} \frac{1}{k}  {C \choose m} \left(\frac{k}{n}\right)^m \left(\frac{n-k}{n}\right)^{C-m}
     }
 \end{align}
 %
-% \todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the coverage $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over coverage levels and debias each coverage level appropriately.}
+% \todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the read depth $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over read depth levels and debias each read depth level appropriately.}
 
 The approach to compute this for a window is to sum up all values across the SNPs in the window.
 This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{pi},
-and implemented in our \toolname{grenedalf} as well. Note that the denominator only depends on the total coverage $\coverage$ and the pool size $\samplesize$, and hence only needs to be computed once per coverage level, yielding a significant computational speedup.
+and implemented in our \toolname{grenedalf} as well. Note that the denominator only depends on the total read depth $\readdepth$ and the pool size $\samplesize$, and hence only needs to be computed once per read depth level, yielding a significant computational speedup.
 
 % \begin{align}
 %  \mathbb{E}(\theta_\pi,c) = \theta a_1(n) \frac{C}{C-1}\sum_{m=b}^{C-b}\left( 1 -
@@ -654,7 +664,7 @@ and implemented in our \toolname{grenedalf} as well. Note that the denominator o
 
 % \todo{this section name has a hat, while the previous theta pi section name does not. Jeff, which one do you prefer? JPS: I prefer Hat for this section because Watterson's is explicitly an estimator, whereas $\theta_\pi$ as we defined it -- is a population-level parameter (i.e., the pairwise heterozygosity \emph{in the population})}
 
-% \todo{JPS:  Hey Lucas -- I think that all of these should be divided by the number of SNPs, otherwise it's an estimate of the \emph{total} rate of mutation across all sites.  Just want to check that that's what's in the code...  --> it is! well, both, the absolute and relative value are printed. thanks for checking! dividing by the number of sites with sufficient coverage (according to the min count and min cov settings) to get the to relative one.}
+% \todo{JPS:  Hey Lucas -- I think that all of these should be divided by the number of SNPs, otherwise it's an estimate of the \emph{total} rate of mutation across all sites.  Just want to check that that's what's in the code...  --> it is! well, both, the absolute and relative value are printed. thanks for checking! dividing by the number of sites with sufficient read depth (according to the min count and min cov settings) to get the to relative one.}
 
 % ------------------------------------------------------------------------------------------------------
 %          Theta Watterson
@@ -675,7 +685,7 @@ Formally, let $M_\ell$ be the number of reads supporting the derived allele at s
 %     \nonumber
     S_b(\ell) :=
     \begin{cases}
-        1 & \text{if } b \le M_\ell \le \coverage-b
+        1 & \text{if } b \le M_\ell \le \readdepth-b
         \\
         0 & \text{otherwise}
     \end{cases}
@@ -693,16 +703,16 @@ Reasoning the same as above, we get the expected value of $\widehat{\theta}_w$ a
     \nonumber
     \mathbb{E}\left[\widehat{\theta}_w\right]
     &= \frac{1}{a_1(\samplesize-1)} \cdot \mathbb{P}\left(\text{Site is a SNP}\right)
-        \cdot \sum_{m=b}^{\coverage-b} \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
+        \cdot \sum_{m=b}^{\readdepth-b} \mathbb{P}\left(M = m \mid \text{Site is a SNP}\right)
     \\
     \intertext{
         with the two probability terms again as in \eqnref{eq:PSNP} and \eqnref{eq:Pmcn}, thus leading to
     }
     \label{eq:ExpectationThetaW}
-    &= \frac{1}{a_1(n-1)} \cdot \theta\sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+    &= \frac{1}{a_1(n-1)} \cdot \theta\sum_{m=b}^{\readdepth-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
 \end{align}
 %
-To accommodate different coverage levels throughout the genome, denote the set of different coverage levels as $\mathcal{C}$, and the set of sites with coverage $c$ as $\mathcal{S}_c$. Equation~\ref{eq:ExpectationThetaW} immediately suggests the following unbiased estimator, which we denote $\widehat{\theta}_{w, \text{pool}}$:
+To accommodate different read depth levels throughout the genome, denote the set of different read depth levels as $\mathcal{C}$, and the set of sites with read depth $c$ as $\mathcal{S}_c$. Equation~\ref{eq:ExpectationThetaW} immediately suggests the following unbiased estimator, which we denote $\widehat{\theta}_{w, \text{pool}}$:
 %
 \begin{align}
     \label{eq:CorrectedThetaEstimate}
@@ -710,11 +720,11 @@ To accommodate different coverage levels throughout the genome, denote the set o
     \frac{
         \sum_{\ell \in \mathcal{S}_c} S_b(\ell)
     }{
-         \sum_{m=b}^{\coverage-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\coverage}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\coverage-m}
+         \sum_{m=b}^{\readdepth-b}\sum_{k=1}^{n-1} \frac{1}{k} \binom{\readdepth}{m} \left(\frac{k}{\samplesize}\right)^m \left(\frac{\samplesize-k}{\samplesize}\right)^{\readdepth-m}
     }
 \end{align}
 
-Again, the approach to compute this for a window is to sum up all values across the SNPs in the window.  As before, the denominator only depends on the coverage $\coverage$, and hence only needs to be computed once per coverage level that is present in the data.  This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta}, and implemented in our \toolname{grenedalf} as well.
+Again, the approach to compute this for a window is to sum up all values across the SNPs in the window.  As before, the denominator only depends on the read depth $\readdepth$, and hence only needs to be computed once per read depth level that is present in the data.  This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta}, and implemented in our \toolname{grenedalf} as well.
 
 % ------------------------------------------------------------------------------------------------------
 %          Simplified Theta Watterson
@@ -812,7 +822,7 @@ $\widehat{\theta}_{w,\text{pool}}$ repeatedly $c-2b$ many times,
 with each of these computations involving the compututation of their respective denominators.
 % as shown in \eqnref{eq:ThetaPiPool} and \eqnref{eq:ThetaWPool}.
 However, as $c$ remains constant throughout this computation, these denominators (the correction terms)
-are shared across positions along the genome with the same coverage and number of derived alleles, so that we can re-use them across positions with identical values of those, to gain a $\approx C$-fold speedup.
+are shared across positions along the genome with the same read depth and number of derived alleles, so that we can re-use them across positions with identical values of those, to gain a $\approx C$-fold speedup.
 
 At this point, the PoPoolation equation document also introduces an approach to compute Tajima's D based on the above in windows.
 We here skip this part for brevity.
@@ -900,7 +910,7 @@ However, in their implementation, \toolname{PoPoolation} instead has a slight mi
 
 \popoolissue{A more serious issue occurred in the computation of alpha*. The code actually computes this as beta*, and never calls the actual alpha* function, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L104}{here}. This is a bug that Robert and I have discussed before, and I think it is fixed now.}
 
-\popoolissue{Another small issue: The computation of alpha* requires ``effective coverage'' to be larger than 1, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L226}{here}, but tests this against $n$, which is the number of individuals. Are we missing something here?}
+\popoolissue{Another small issue: The computation of alpha* requires ``effective coverage'' (read depth) to be larger than 1, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L226}{here}, but tests this against $n$, which is the number of individuals. Are we missing something here?}
 
 \popoolissue{Furthermore, we tested the computation of alpha*, and it also gives NaN values for input 2 and 3, so the test should in fact be $>= 4$ instead.}
 
@@ -915,7 +925,7 @@ if we were to do individual sequencing.
 In our case of pool sequencing, according to \toolname{PoPoolation},
 we can simply substitute this with the expected number of distinct individuals sequenced.
 
-To this end, we use the coverage $\coverage$, as well as the pool size $n$, which we here use as our substitute for the number of individuals sequenced.
+To this end, we use the read depth $\readdepth$, as well as the pool size $n$, which we here use as our substitute for the number of individuals sequenced.
 % \todo{I have no idea what this distinction between $n$ and $n$ is about, and the PoPoolation document does not explain this at all... It might be that $n$ is meant to be the $n$ (pool size) from previous sections, but $n$ here is used as the parameter for $f^*$ instead?!}
 Then, we define $\tilde{n}$ as the expected number of individuals from our pool that have been sequenced:
 %
@@ -923,13 +933,13 @@ Then, we define $\tilde{n}$ as the expected number of individuals from our pool 
     \label{eq:IndivSeqBruteForce}
     \tilde{n}
 %     &= \sum_{k=1}^{\text{max}(C, n)} k \cdot \frac{{n \choose k} \sum_{j=1}^{k} (-1)^{k-j} {k \choose j} j^C }{n^C}
-    &= \sum_{k=1}^{t} \sum_{j=1}^{k} (-1)^{k-j} \cdot k \binom{n}{k} \binom{k}{j} \left(\frac{j}{n}\right)^\coverage
+    &= \sum_{k=1}^{t} \sum_{j=1}^{k} (-1)^{k-j} \cdot k \binom{n}{k} \binom{k}{j} \left(\frac{j}{n}\right)^\readdepth
 \end{align}
 %
-where $t=\text{max}(\coverage, n)$; if $n$ is much larger than $\coverage$, we can assume $\tilde{n} \approx \coverage$.
+where $t=\text{max}(\readdepth, n)$; if $n$ is much larger than $\readdepth$, we can assume $\tilde{n} \approx \readdepth$.
 % Our substitute $\tilde{n}$ is then obtained by averaging $\tilde{n}$ over the window $W$.
 
-\popoolissue{We think that there is either an error here, or a bug in the code. The code in PoPoolation actually uses the minimum of coverage and pool size in the above, instead of the maximum as stated above, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L156}{here}. We are not sure which one is correct though, or what the implications of this are.}
+\popoolissue{We think that there is either an error here, or a bug in the code. The code in PoPoolation actually uses the minimum of coverage (aka read depth) and pool size in the above, instead of the maximum as stated above, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L156}{here}. We are not sure which one is correct though, or what the implications of this are.}
 
 \popoolissue{Furthermore, the original equations document states that ``$\tilde{n}$ is obtained averaging $\tilde{n}$ over the window W'', which we also stated above. However, looking at the code \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L127}{here}, there is no averaging over the window, and instead it's just computed once. The function for averaging exists in the same PoPoolation function as well, see \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L117-L125}{here}, but is commented out, and also contains a bug, as \texttt{\$cov} is not used. We are unsure how much averaging over the window vs just one value actually changes the results, and hence wanted to bring it up here.} 
 
@@ -940,7 +950,7 @@ what is the expected number of distinct values (individuals) that have been pick
 
 \toolname{PoPoolation} computes this value by brute force using \eqnref{eq:IndivSeqBruteForce},
 that is, by trying all possible ways to pick numbers from the set.
-However, there exists a closed form solution to this question, which yields massive speedups for larger coverages, which we have implemented.
+However, there exists a closed form solution to this question, which yields massive speedups for larger read depths, which we have implemented.
 
 One way to arrive at the closed form expression is as follows:
 % https://math.stackexchange.com/questions/5775/how-many-bins-do-random-numbers-fill
@@ -952,10 +962,10 @@ The probability that $I_i$ equals $1$ (that is, that individual $i$ has been seq
 for any $i$ is given by:
 %
 \begin{align}
-    P(I_i = 1) &= 1-\left( \frac{n-1}{n} \right)^\coverage
+    P(I_i = 1) &= 1-\left( \frac{n-1}{n} \right)^\readdepth
 \end{align}
 %
-In words, this is the complement of \emph{not} picking $i$ in all of the $\coverage$ picks from set $A$.
+In words, this is the complement of \emph{not} picking $i$ in all of the $\readdepth$ picks from set $A$.
 
 The expected size of the set $B$ can then be computed by linearity of expectation for all $i$,
 yielding our closed form expression:
@@ -965,10 +975,10 @@ yielding our closed form expression:
 %
 \begin{align}
     \label{eq:NTildeClosedForm}
-    \tilde{n} = n \left( 1 - \left( \frac{n-1}{n} \right)^\coverage \right)
+    \tilde{n} = n \left( 1 - \left( \frac{n-1}{n} \right)^\readdepth \right)
 \end{align}
 %
-This is the equation that we compute in our implementation to arrive at $\tilde{n}$ for a given coverage $\coverage$ and poolsize $n$.
+This is the equation that we compute in our implementation to arrive at $\tilde{n}$ for a given read depth $\readdepth$ and pool size $n$.
 
 Note that $\tilde{n}$ is bounded by both $n$ and $c$, meaning that $\forall n \geq 1$ and $\forall c \geq 1$ we have
 \begin{align}
@@ -982,16 +992,16 @@ The second inequality can be shown using Bernoulli's inequality:
 \end{align}
 With this, we get
 \begin{align}
-    \tilde{n} = n \left( 1 - \left( \frac{n-1}{n} \right)^\coverage \right) \leq n \left( 1 - \left( 1 - \frac{c}{n} \right) \right) = c
+    \tilde{n} = n \left( 1 - \left( \frac{n-1}{n} \right)^\readdepth \right) \leq n \left( 1 - \left( 1 - \frac{c}{n} \right) \right) = c
 \end{align}
 This also follows from our definition of $\tilde{n}$, the expected number of sequenced individuals. That number cannot be greater than the pool size $n$ itself, and it can also not exceed the number $c$ of reads that we sequenced from that pool.
 
 
-\todo{UNRESOLVED ISSUE: This is computed using the coverage $\coverage$ in the above equations (and in the PoPoolation equations), but seems to be called with $b$ (min coverage) in their code (and in mine). Jeff, is that yet another bug (number three then, on top of the two already mentioned two sections below) that they introduced in their code? it seems weird to compute this based on the min coverage, than the actual coverage at the site.  JPS: I'm actually not totally sure what the PoPoolation people are doing here.  I guess they're plugging an estimate of $n$ into the f alpha and beta, which is fine, but could be biased.  My guess is that you would want to use $\coverage$ and not $b$, but as I said I'm not totally sure what they're doing here. Update 1/4/23 -- I think that they should be using $c$ here and not $b$. But, I should say that just plugging in an estimate for $n$ in the Achaz equations will result in some bias as equations 20, 21, and 22 are nonlinear in n.}
+\todo{UNRESOLVED ISSUE: This is computed using the coverage $\readdepth$ (aka read depth) in the above equations (and in the PoPoolation equations), but seems to be called with $b$ (min coverage) in their code (and in mine). Jeff, is that yet another bug (number three then, on top of the two already mentioned two sections below) that they introduced in their code? it seems weird to compute this based on the min coverage, than the actual coverage at the site.  JPS: I'm actually not totally sure what the PoPoolation people are doing here.  I guess they're plugging an estimate of $n$ into the f alpha and beta, which is fine, but could be biased.  My guess is that you would want to use $\readdepth$ and not $b$, but as I said I'm not totally sure what they're doing here. Update 1/4/23 -- I think that they should be using $c$ here and not $b$. But, I should say that just plugging in an estimate for $n$ in the Achaz equations will result in some bias as equations 20, 21, and 22 are nonlinear in n.}
 
 % Keeping the popoolation issues here for later reference.
 
-\popoolissue{Here seem to be more issues in the PoPoolation code. Looking again at the line where the call to compute $n_\text{base}$ is located, \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L127}{here}, the function is called with the min coverage, instead of the actual coverage as stated in the equations here. We are not sure what effect this has, but think that this is an issue.}
+\popoolissue{Here seem to be more issues in the PoPoolation code. Looking again at the line where the call to compute $n_\text{base}$ is located, \href{https://github.com/lczech/popoolation/blob/092e7a6f7ee4910c1bec4377e0adccc353175bc8/Modules/VarMath.pm\#L127}{here}, the function is called with the min coverage (read depth), instead of the actual coverage as stated in the equations here. We are not sure what effect this has, but think that this is an issue.}
 
 \popoolissue{Furthermore, that call to \texttt{nbase\_buffer} takes two arguments, \texttt{\$n} and \texttt{\$mincoverage}, but the inner function of \texttt{get\_nbase\_buffer} only does one \texttt{shift}, hence ignoring the second argument. Robert changed that line after our conversation, but I am not sure that everything is fixed yet, see below.}
  
@@ -1049,16 +1059,16 @@ several assumptions were made that lead to the resulting estimator being conserv
 \ie yielding smaller values than what would be expected from individual sequencing of samples.
 Based on the explanation in the \toolname{PoPoolation} equations document (most of the text in this section is adapted from there), we explore the underlying assumptions and biases.
 
-The locally fluctuating coverage is replaced by the minimum coverage.
+The locally fluctuating read depth is replaced by the minimum read depth.
 This makes the variance estimator larger, and therefore leads to conservative estimates of Tajima's D.
 
-The random number of different individuals sequenced under a given coverage $C$
+The random number of different individuals sequenced under a given read depth $C$
 is replaced by its expected value $\tilde{n}$.
 This assumption should not affect the results much:
-If the pool size is large compared to the coverage, sequencing the same individual more than once is uncommon.
+If the pool size is large compared to the read depth, sequencing the same individual more than once is uncommon.
 
 Furthermore the number of different individuals sequenced will have a low variance.
-As we are working with the minimum coverage, $\tilde{n}$ will be biased downwards,
+As we are working with the minimum read depth, $\tilde{n}$ will be biased downwards,
 tending to give a conservative estimate of the variance.
 
 At different positions, the subsets from the pool that are sequenced might be different.
@@ -1075,7 +1085,7 @@ Lastly, the \toolname{PoPoolation} code repository contains a plot showing the c
 and the corrected Tajima's D using the equations described above;
 please see \href{https://github.com/lczech/popoolation/raw/master/files/correlation_classic_correctedTajimasD.png}{here},
 where the x-axis corresponds to the classical value, and the y-axis the the corrected one.
-This plot has been made with real-world data from Drosophila with a coverage of 12,
+This plot has been made with real-world data from Drosophila with a read depth (in their naming: coverage) of 12,
 a window size of 500 and a minimum count of 1, and corroborates our sense that the \toolname{PoPoolation} estimator is conservative.
 
 % % ------------------------------------------------------------------------------------------------------
@@ -1102,14 +1112,14 @@ As mentioned above, based on further observed results, we however suspect that t
 
 \todo{important unmentioned and unresolved bugs:  (1) using min b for the n tilde computation seems super wrong as well.  (2) Harmonic numbers appear in the Achaz formulae, but we plug in the “effective” number of individuals which is generally not an integer. But the usual harmonic numbers are defined only for integers.  (3) the last position of a window is accidentally used as the first of the following instead.}
 % There is one particular issue: in \eqnref{eq:NTildeClosedForm}
-% This is computed using the coverage $\coverage$ in the above equations (and in the PoPoolation equations), but seems to be called with $b$ (min coverage) in their code.
-% My guess is that you would want to use $\coverage$ and not $b$,
+% This is computed using the read depth $\readdepth$ in the above equations (and in the PoPoolation equations), but seems to be called with $b$ (min coverage aka read depth) in their code.
+% My guess is that you would want to use $\readdepth$ and not $b$,
 % I think that they should be using $c$ here and not $b$. But, I should say that just plugging in an estimate for $n$ in the Achaz equations will result in some bias as equations 20, 21, and 22 are nonlinear in n.
 
 % The effect of those bugs is shown in \figref{fig:bug-exam}. 
 % In short, we observed an overestimation of Tajima's D in the range 2.8 to 3.5 times when using the default settings of \toolname{PoPoolation}. 
 
-Note: In version 2023-04-12 of this document, we also included a Figure where we examined the effect of the bugs that we had identified until then, by comparing values of Tajima's D with and without these bugs, for different pool sizes, minimum coverages, and window sizes.  We have now decided to remove that figure again, because with the potentially remaining open statistical issues of their approach, the comparison is rendered futile.
+Note: In version 2023-04-12 of this document, we also included a Figure where we examined the effect of the bugs that we had identified until then, by comparing values of Tajima's D with and without these bugs, for different pool sizes, minimum read depths (back then, unfortunately called ``coverage''), and window sizes.  We have now decided to remove that figure again, because with the potentially remaining open statistical issues of their approach, the comparison is rendered futile.
 % as it did not seem very interesting to us to compare values that are wrong due to bugs to values that are not quite right due to incomplete estimators, for reasons outlined in the next section.
 % as we were unsure what portion of the observed differences in values were due to \toolname{PoPoolation} bugs as opposed to being a consequence of the biased estimator itself. 
 
@@ -1172,11 +1182,11 @@ In a sense, there is a philosophical question about what Tajima's D even should 
 
 % Wow, I've had a hard time writing this in a way that does not make PoPoolation sound too bad... Jeff and I are still not sure whether the below is a bug in their code, a not well working aspect of their equations and statistics, or simply an oversight on their end... Hard to tell, and in dubio pro reo, I tried to write it as nicely as I could. I hope it works that way.
 
-Firstly, the equations above leave it open what coverage to use for the computation of $\tilde{n}$ in \eqnref{eq:NTildeClosedForm} for computing the Achaz approach.  In \toolname{PoPoolation}, they use the minimum coverage $b$ as provided by the user, instead of empirical coverage in the window.  We suspect that this leads to a major distortion of the results:  As shown in \eqnref{eq:NTildeBounds}, the value of $\tilde{n}$ is bounded by both the coverage and the pool size; however, a requirement of the approach is that $b := 2$ (see \secref{supp:sec:TajimaD:sub:Classic}), which hence means that $\tilde{n} \leq 2$, which will rarely reflect the expected number of individuals sequenced.
+Firstly, the equations above leave it open what read depth to use for the computation of $\tilde{n}$ in \eqnref{eq:NTildeClosedForm} for computing the Achaz approach.  In \toolname{PoPoolation}, they use the minimum allele count $b$ as provided by the user, instead of empirical read depth in the window.  We suspect that this leads to a major distortion of the results:  As shown in \eqnref{eq:NTildeBounds}, the value of $\tilde{n}$ is bounded by both the read depth and the pool size; however, a requirement of the approach is that $b := 2$ (see \secref{supp:sec:TajimaD:sub:Classic}), which hence means that $\tilde{n} \leq 2$, which will rarely reflect the expected number of individuals sequenced.
 
-Hence, empirical alternatives for the coverage likely yield more reasonable results. For instance, in order to use Tajima's D for outlier detection, one typically wants to be conservative. In that case, we should assume loci to be as correlated as possible, and hence use the smallest coverage in the given window instead, and plug that into the Achaz approach.
+Hence, empirical alternatives for the read depth likely yield more reasonable results. For instance, in order to use Tajima's D for outlier detection, one typically wants to be conservative. In that case, we should assume loci to be as correlated as possible, and hence use the smallest read depth in the given window instead, and plug that into the Achaz approach.
 
-Furthermore, if we ignore all of the noise from pool sequencing, then the denominator should just be based on the equations by Achaz as explained above, but using the pool size $n$ instead of the effective pool size $\tilde{n}$.  This probably works well enough if coverage is high, as the noise induced by pool sequencing is relatively small compared to the noise introduced by demography (see below).  If however we want to include the noise from pool sequencing, which in particular is relevant at low coverages, then it becomes quite complicated, and the approach as described above starts to break down.
+Furthermore, if we ignore all of the noise from pool sequencing, then the denominator should just be based on the equations by Achaz as explained above, but using the pool size $n$ instead of the effective pool size $\tilde{n}$.  This probably works well enough if read depth is high, as the noise induced by pool sequencing is relatively small compared to the noise introduced by demography (see below).  If however we want to include the noise from pool sequencing, which in particular is relevant at low read depths, then it becomes quite complicated, and the approach as described above starts to break down.
 
 For a comprehensive estimator of the variance, we would have to know about the covariance of frequencies across sites. In the Pool-seq context, this has two components: (1) The first is a demographic component --- how has the randomness of the populations affected these two sites? The approach by Achaz answers that question (in isolation).  (2) The second is a Pool-seq component --- how does the randomness in the allele frequencies at these two sites covary?
 
@@ -1187,10 +1197,10 @@ Hence, finding a comprehensive solution that \emph{actually} yields the intended
 In conclusion, we suggest the following: 
 
 \begin{itemize}
-    \item The approach of \toolname{PoPoolation} to use the minimum coverage $b$ to compute $\tilde{n}$ is likely not reasonable.
-    \item Instead, using the pool size to replace the whole term, i.\,e., $\tilde{n} = n$, is better under high coverages.
-    \item Alternatively, for a more conservative approach, we can compute $\tilde{n}$ as in \eqnref{eq:NTildeClosedForm}, by using pool size $n$, but set $c$ to the minimum empirical coverage found in the given window.
-    \item By far the easiest and safest option in our opinion is to (for now) abandon the goal of quantitative comparability with the classic Tajima's D, and instead directly use the difference of $\theta_{\pi,\text{pool}}$ and $\theta_{w, \text{pool}}$.  As long as coverage is relatively equal along the regions being compared, this should enable the detection of outliers and other features of interest.
+    \item The approach of \toolname{PoPoolation} to use the minimum read depth $b$ to compute $\tilde{n}$ is likely not reasonable.
+    \item Instead, using the pool size to replace the whole term, i.\,e., $\tilde{n} = n$, is better under high read depths. This basically assumes that the number of individuals sequenced is equal to the pool size.
+    \item Alternatively, for a more conservative approach, we can compute $\tilde{n}$ as in \eqnref{eq:NTildeClosedForm}, by using pool size $n$, but set $c$ to the minimum empirical read depth found in the given window.
+    \item By far the easiest and safest option in our opinion is to (for now) abandon the goal of quantitative comparability with the classic Tajima's D, and instead directly use the difference of $\theta_{\pi,\text{pool}}$ and $\theta_{w, \text{pool}}$.  As long as read depth is relatively equal along the regions being compared, this should enable the detection of outliers and other features of interest.
 \end{itemize}
 
 Lastly, we want to invite the research community to further scrutinize these approaches, and provide suggestions for how to move forward, in order to get a Pool-seq equivalent of Tajima's D that is quantitatively comparable to the classic estimator.
@@ -1206,7 +1216,7 @@ In this section, we will derive unbiased estimators of various measures of heter
 These will then be combined to obtain ``sample-size'' and ``pool-size'' corrected estimators of two definitions of \fst.
 On top of these two estimators for \fst{} in the pool-sequencing context, we also walk through the two existing estimators as suggested by \citeay{Kofler2011b} and \citeay{Karlsson2007}.
 Both are implemented in \toolname{PoPoolation2}, and are called the ``classical'' or ``conventional pool sequencing'' approach, and the ``Karlsson approach adapted to digital data'', respectively, in \citeay{Kofler2011b}.
-We compare all four approaches to each other, and show that the ``classical'' approach is biased for lower coverages or small pool sizes, and the Karlsson approach is biased for small pool sizes (bias on the order of 1/pool size).
+We compare all four approaches to each other, and show that the ``classical'' approach is biased for lower read depths or small pool sizes, and the Karlsson approach is biased for small pool sizes (bias on the order of 1/pool size).
 See also \citeay{Hivert2018} for an assessment of \fst{} in the pool-sequencing context.
 
 % ------------------------------------------------------------------------------------------------------
@@ -1270,9 +1280,9 @@ We will show below that the following are unbiased estimators of the correspondi
     % Some trickery is needed below for a nice alignment. Not quite perfect, but good enough for now.
     \widehat{\pi}_\text{within} &:=
         \frac{1}{2}
-        \Bigg[                                 \left( \frac{n_{(1)}}{n_{(1)}-1} \right) \left( \frac{\coverage_{(1)}}{\coverage_{(1)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(1)}^2 \right) \Bigg. \\
+        \Bigg[                                 \left( \frac{n_{(1)}}{n_{(1)}-1} \right) \left( \frac{\readdepth_{(1)}}{\readdepth_{(1)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(1)}^2 \right) \Bigg. \\
     \label{eq:Fst:UnbiasedPiWithin}
-        \Bigg. &+ \phantom{\frac{1}{2} \Bigg[} \left( \frac{n_{(2)}}{n_{(2)}-1} \right) \left( \frac{\coverage_{(2)}}{\coverage_{(2)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(2)}^2 \right) \Bigg] \\
+        \Bigg. &+ \phantom{\frac{1}{2} \Bigg[} \left( \frac{n_{(2)}}{n_{(2)}-1} \right) \left( \frac{\readdepth_{(2)}}{\readdepth_{(2)}-1} \right) \left( 1 - \sum_{\tau} \empfreq_{\tau(2)}^2 \right) \Bigg] \\
     \label{eq:Fst:UnbiasedPiBetween}
     \widehat{\pi}_\text{between} &:=
         1 - \sum_{\tau} \empfreq_{\tau(1)}\empfreq_{\tau(2)} \\
@@ -1292,7 +1302,7 @@ In the following, we derive these estimators.
 
 We have derived previously that
 \[
-\mathbb{E}\left[\left(\frac{n_{(1)}}{n_{(1)}-1}\right)\left(\frac{\coverage_{(1)}}{\coverage_{(1)}-1}\right)\left(1 - \sum_{\tau}\empfreq_{\tau(1)}^2\right) \right] = \left(1 - \sum_\tau f_{\tau(1)}^2\right)
+\mathbb{E}\left[\left(\frac{n_{(1)}}{n_{(1)}-1}\right)\left(\frac{\readdepth_{(1)}}{\readdepth_{(1)}-1}\right)\left(1 - \sum_{\tau}\empfreq_{\tau(1)}^2\right) \right] = \left(1 - \sum_\tau f_{\tau(1)}^2\right)
 \]
 within a single population.  It follows immediately that averaging these estimators across the two populations is unbiased for $\pi_\text{within}$.
 
@@ -1339,7 +1349,7 @@ Now, to estimate the population-level $\pi_\text{within}$, we could look at a sm
 
 This however is different in the case of $\pi_\text{between}$.  In that case, we are comparing a haploid from one population to a haploid from a different population.  Hence, we are comparing a single haploid (or single read) from one population to a single haploid (or read) from another population.  If we only draw a single sample, then there is no difference between sampling with or without replacement, and so our equations (which again are implicitly based on sampling with replacement) do not need to be corrected to match the idea of sampling without replacement.  
 
-In summary, when considering two entities at a time from the same pool/population, we need to include Bessel's corrections such as for pool size and read coverage. However, if we are only considering one entity at a time from each pool/population, then we do not need those corrections.
+In summary, when considering two entities at a time from the same pool/population, we need to include Bessel's corrections such as for pool size and read depth. However, if we are only considering one entity at a time from each pool/population, then we do not need those corrections.
 
 % ------------------------------------------------------------------------------------------------------
 %          Estimating FST
@@ -1386,22 +1396,22 @@ For comparability and historical backwards compatibility, we however still offer
 % We here still walk through these, see \secref{supp:sec:PoPoolation2Equations}.
 
 First, we present the ``classical'' approach as implemented in \toolname{PoPoolation2}, labelled with superscript ``Kofler'' here, following \citeay{Kofler2011b}.
-We compute \fst{} for two subpopulations, which we here again denote with subscripts $(1)$ and $(2)$, and the total population with $(T)$. We expect poolsizes $n >= 2$.
+We compute \fst{} for two subpopulations, which we here again denote with subscripts $(1)$ and $(2)$, and the total population with $(T)$. We expect pool sizes $n >= 2$.
 
 For each SNP in a given window, \toolname{PoPoolation2} computes:
 % \verb|f_st_conventional_pool_pi_snp|
 
 \begin{align}
     \label{eq:PoPoolation2FstPi:1}
-    \widehat{\pi}_{(1)}^\text{Kofler}  &:= \frac{\coverage_{(1)}}{\coverage_{(1)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(1)}^2 \right) \\
+    \widehat{\pi}_{(1)}^\text{Kofler}  &:= \frac{\readdepth_{(1)}}{\readdepth_{(1)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(1)}^2 \right) \\
     \label{eq:PoPoolation2FstPi:2}
-    \widehat{\pi}_{(2)}^\text{Kofler}  &:= \frac{\coverage_{(2)}}{\coverage_{(2)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(2)}^2 \right) \\
+    \widehat{\pi}_{(2)}^\text{Kofler}  &:= \frac{\readdepth_{(2)}}{\readdepth_{(2)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(2)}^2 \right) \\
     \label{eq:PoPoolation2FstPi:T}
-    \widehat{\pi}_{(T)}^\text{Kofler}  &:= \frac{\coverage_{(T)}}{\coverage_{(T)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(T)}^2 \right) \\
+    \widehat{\pi}_{(T)}^\text{Kofler}  &:= \frac{\readdepth_{(T)}}{\readdepth_{(T)}-1} \cdot  \left( 1 - \sum_\tau \empfreq_{\tau(T)}^2 \right) \\
     \nonumber
     \mbox{with} \\
     \nonumber
-    \coverage_{(T)} &:= \mbox{min} \left( \coverage_{(1)}, \coverage_{(2)} \right) \\
+    \readdepth_{(T)} &:= \mbox{min} \left( \readdepth_{(1)}, \readdepth_{(2)} \right) \\
     \nonumber
     \empfreq_{\tau(T)} &:= \frac{1}{2} \left( \empfreq_{\tau(1)} + \empfreq_{\tau(2)} \right)
 \end{align}
@@ -1429,7 +1439,7 @@ Finally, the estimate of \fst is computed as:
     \widehat{\text{F}}_\text{ST}^\text{Kofler} &= \frac{ \widehat{\pi}_{W(T)}^\text{Kofler} - \frac{1}{2} \left(     \widehat{\pi}_{W(1)}^\text{Kofler} +     \widehat{\pi}_{W(2)}^\text{Kofler}  \right)}{ \widehat{\pi}_{W(T)}^\text{Kofler}}
 \end{align}
 
-Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{total}$.  There are two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator --- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different coverages and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum coverage and the minimum sample size for both.  This again will result in an upward bias for the sample with higher coverage and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{F}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
+Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{total}$.  There are two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator --- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different read depths and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum read depth and the minimum sample size for both.  This again will result in an upward bias for the sample with higher read depth and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{F}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
 
 % Moi's rendering of the equations. Keeping it here for reference, in case it's later needed.
 
@@ -1465,7 +1475,7 @@ We here briefly also go through the derivation.
 We here call this estimator using the superscript ``Karlsson'', which is again defined for two subpopulations denoted with subscripts $(1)$ and $(2)$.
 % We expect poolsizes $n >= 2$.
 We are here only looking at biallelic SNPs.
-Instead of $\tau$ for the four nucleotides, we hence use $q$ for the frequency of the major (reference) allele and $p$ for the frequency of the minor (alternative) allele.  We will also use $\widehat{q}$ and $\widehat{p}$ as the corresponding empirical estimates of $q$ and $p$ (\ie the number of reads supporting the major or minor allele divided by the coverage).
+Instead of $\tau$ for the four nucleotides, we hence use $q$ for the frequency of the major (reference) allele and $p$ for the frequency of the minor (alternative) allele.  We will also use $\widehat{q}$ and $\widehat{p}$ as the corresponding empirical estimates of $q$ and $p$ (\ie the number of reads supporting the major or minor allele divided by the read depth).
 
 We start with the definition of $\text{F}_\text{ST}^\text{Karlsson}$ from Karlsson \textit{et al.} for the SNPs in a window $W$:
 
@@ -1491,14 +1501,14 @@ These are estimated as follows, using the numerator $\hat{N}_k$ and denominator 
 
 \begin{align}
     \label{eq:FstKnh}
-    \widehat{N}_k &= \left( \widehat{q}_{(1)} - \widehat{q}_{(2)} \right)^2 - \left( \frac{h_{(1)}}{\coverage_{(1)}} + \frac{h_{(2)}}{\coverage_{(2)}} \right) \\
+    \widehat{N}_k &= \left( \widehat{q}_{(1)} - \widehat{q}_{(2)} \right)^2 - \left( \frac{h_{(1)}}{\readdepth_{(1)}} + \frac{h_{(2)}}{\readdepth_{(2)}} \right) \\
     \label{eq:FstKdh}
     \widehat{D}_k &= \widehat{N}_k + h_{(1)} + h_{(2)}
     \intertext{with two additional helpers:}
     \nonumber
-    h_{(1)} &= \frac{\coverage_{(1)}}{(\coverage_{(1)}-1)}\widehat{q}_{(1)}\widehat{p}_{(1)} \\
+    h_{(1)} &= \frac{\readdepth_{(1)}}{(\readdepth_{(1)}-1)}\widehat{q}_{(1)}\widehat{p}_{(1)} \\
     \nonumber
-    h_{(2)} &= \frac{\coverage_{(2)}}{(\coverage_{(2)}-1)}\widehat{q}_{(2)} \widehat{p}_{(2)}
+    h_{(2)} &= \frac{\readdepth_{(2)}}{(\readdepth_{(2)}-1)}\widehat{q}_{(2)} \widehat{p}_{(2)}
     \end{align}
 
 And finally, these are used to define estimator $\widehat{\text{F}}_\text{ST}^\text{Karlsson}$ for a window $W$:
@@ -1508,7 +1518,7 @@ And finally, these are used to define estimator $\widehat{\text{F}}_\text{ST}^\t
     \widehat{\text{F}}_\text{ST}^\text{Karlsson} &= \frac{\sum_W \widehat{N}_k}{\sum_W \widehat{D}_k}
 \end{align}
 
-According to Karlsson \textit{et al.}, when the coverages $\coverage_{(1)}$ and $\coverage_{(2)}$ (called ``sample sizes'' there) are equal, the estimator reduces to the estimator of \fst{} given by \citeay{Weir2002}.
+According to Karlsson \textit{et al.}, when the read depths $\readdepth_{(1)}$ and $\readdepth_{(2)}$ (called ``sample sizes'' there) are equal, the estimator reduces to the estimator of \fst{} given by \citeay{Weir2002}.
 Karlsson \textit{et al.} further state that by the Lehmann-Scheff\'{e} theorem \cite[Theorem 4.2.2]{Bickel1977}, it follows that $\widehat{N}_k$ and $\widehat{D}_k$ are uniformly minimum variance unbiased estimators of $N_k$ and $D_k$, respectively, and hence conclude that their estimator \^{F}\textsubscript{ST,K} is also asymptotically unbiased.
 
 This estimator is very similar (after some algebra) to our $\widehat{\text{F}}_\text{ST}^\text{Hudson}$.
@@ -1694,7 +1704,7 @@ With these preliminaries out of the way, we can get to our estimators.
 
 Recall that \piw is defined as $\frac{1}{2}\left(\pi_{(1)} + \pi_{(2)}\right)$, where $\pi_{(p)}$ is the heterozygosity in population $p$.  Since this is linear, we just need an unbiased estimator for the heterozygosity within one population, and then we can average these estimators across the populations to obtain an estimator of \piw.
 
-Our estimator is a bit unwieldy, so first we define a number of additional variables to clean up the notation.  Note that all of these only depend upon observable quantities (i.e., the sample size, coverage, and error rates) so they can be readily computed from the observed data.
+Our estimator is a bit unwieldy, so first we define a number of additional variables to clean up the notation.  Note that all of these only depend upon observable quantities (i.e., the sample size, read depth, and error rates) so they can be readily computed from the observed data.
 \begin{align*}
 \overline{\epsilon} &:= \frac{1}{c} \sum_{j=1}^c \epsilon_j\\
 \overline{\epsilon^2} &:= \frac{1}{c} \sum_{j=1}^c \epsilon_j^2\\
