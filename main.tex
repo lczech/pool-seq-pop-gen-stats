@@ -287,7 +287,7 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \fbox{%
   \parbox{48em}{
         \large
-        \textbf{Version: 2024-05-30}
+        \textbf{Version: 2024-06-07}
         \\ \\
         The latest version of this document can be found at %\\
         \url{https://github.com/lczech/pool-seq-pop-gen-stats}
@@ -617,9 +617,21 @@ Based on the previous section, we can construct an unbiased estimator for $\thet
 %
 % \todo{Hey Jeff, I think we need to change the above a bit. In the denominator, the read depth $c$ can be different per site, and hence needs to be evaluated at each site individually. Hence, in my original forumation of this, I just gave the equation for a single site, and then said that they are summed over all sites. Shall I change it back to that?  JPS: I changed this a bit. Let me know if it's unclear.  Basically we now do a weighted average over read depth levels and debias each read depth level appropriately.}
 
-The approach to compute this for a window is to sum up all values across the SNPs in the window.
+The approach to compute this for a window is to sum up all values across the SNPs in the window, and potentially compute an average to obtain a per-base-pair estimate of nucleotide diversity.
 This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{pi},
 and implemented in our \toolname{grenedalf} as well. Note that the denominator only depends on the total read depth $\readdepth$ and the pool size $\samplesize$, and hence only needs to be computed once per read depth level, yielding a significant computational speedup.
+
+
+% ------------------------------------------------------------------------------------------------------
+%     Window averaging
+% ------------------------------------------------------------------------------------------------------
+
+\subsubsection*{Window averaging}
+\label{supp:sec:ThetaPi:sub:PoolSequencing:sub:WindowAvg}
+
+In order to properly compute the window average to obtain an estimate on the per-base-pair-scale, we divide the sum of the above estimator for all SNPs in the window, and divide by an appropriate denominator. We ideally want to use the number of high-quality positions in the window for this, i.e., all positions that are not missing, passed all potential quality filters, etc. In other words, we want to normalize by the number of positions where we did in fact call a variant, or are certain enough that it is an invariant position. In good data conditions, this is the denominator that is recommended to use.
+
+However, not all input data types might contain the full information that is necessary to calculate this. For instance, formats such as VCF are by their very nature often used to only list the variant positions (SNPs), and so we lack information on the other positions. We would need to know which of these have not been called as variants simply because they are indeed invariant, versus which ones were of insufficient quality to make a proper call. This information can for instance be provided via some external source, such as a mask file. However, in the absence of this information, common strategies in practice are: (1) Simply use the window length itself as the denominator for averaging, which likely produces an underestimation, in particular in low coverage or low quality conditions; (2) Use the number of SNPs instead, which is definitely an overestimate of the per-base-pair diversity (and instead gives a per-SNP estimate), but when interpreted with this in mind, can still be a relevant metric to compare regions to each other.
 
 % \begin{align}
 %  \mathbb{E}(\theta_\pi,c) = \theta a_1(n) \frac{C}{C-1}\sum_{m=b}^{C-b}\left( 1 -
@@ -724,7 +736,7 @@ To accommodate different read depth levels throughout the genome, denote the set
     }
 \end{align}
 
-Again, the approach to compute this for a window is to sum up all values across the SNPs in the window.  As before, the denominator only depends on the read depth $\readdepth$, and hence only needs to be computed once per read depth level that is present in the data.  This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta}, and implemented in our \toolname{grenedalf} as well.
+Again, the approach to compute this for a window is to sum up all values across the SNPs in the window, and normalize as explained above.  As before, the denominator for the per-site estimate in \eqnref{eq:CorrectedThetaEstimate} only depends on the read depth $\readdepth$, and hence only needs to be computed once per read depth level that is present in the data.  This is the equation as implemented in \toolname{PoPoolation} as the measure called \texttt{theta}, and implemented in our \toolname{grenedalf} as well.
 
 % ------------------------------------------------------------------------------------------------------
 %          Simplified Theta Watterson
@@ -1028,7 +1040,7 @@ we can finally define the estimator:
 % \todo{theta b pool W?!}
 following PoPoolation and \citeay{Achaz2008}.
 This requires $b=2$; furthermore, PoPoolation suggests using ``not too small'' windows.
-We are using the size $|W|$ of the window here, that is, the total length along the window in bases, which is typically much larger than the number of SNPs in the window. 
+We are using the size $|W|$ of the window here, that is, the total length along the window in bases, which is typically much larger than the number of SNPs in the window. As we use a difference in two estimators of $\Theta$ in the numerator here, and incorporate the window size in the denominator, we do not need to apply an additional normalization here.
 
 \todo{UNRESOLVED ISSUE: That is what i get from their code. Is that the correct term to use here? should it be the number of SNPs in the window instead?  JPS: I have no idea.  I would need to go through the Achaz paper in some detail to figure it out.  My guess is number of SNPs is right.}
 
@@ -1377,6 +1389,10 @@ We then combine information across the SNPs in the window $W$ as
 
 See \citeay{Bhatia2013} for a practical and theoretical justification for using this ``ratio of averages'' instead of using an ``average of ratios''.
 These are our asymptotically unbiased estimators for \fst{} for Pool-seq data, which take the finite sampling of individuals from the population, and the finite sampling of reads from each individual in the pool, into account.
+
+Furthermore, as explained above in \secref{supp:sec:ThetaPi:sub:PoolSequencing:sub:WindowAvg}, when computing values per window, we here too need to take missing and low quality data into account when working with real-world data. To this end, we again want to normalize the involved values of $\pi$ using only the high-quality positions, that is, the variant and invariant positions that passed all quality filters. However, we are dealing with an estimator here that operators on two pools simultaneously. Hence, the window normalization needs to be applied individually per pool in \eqnref{eq:Fst:UnbiasedPiWithin}, by using the number of positions in each population to normalize the two components of the equation separately from each other. Then, in \eqnref{eq:Fst:UnbiasedPiBetween}, we instead normalize using the number of positions that passed the quality filters in \emph{both} populations.
+
+In the following, we describe our assessment of the estimators previously implemented in \toolname{PoPoolation2}. Note that these two estimators do not use the window normalization as explained here, as they do not correct for the read depths per pool individually either. They hence implicitly assume that the window normalization would cancel out anyway, and do not apply it at all. This makes our estimators as described above better suited for data with low coverage or low quality.
 
 % ------------------------------------------------------------------------------------------------------
 %          PoPoolation2 Estimator of FST
