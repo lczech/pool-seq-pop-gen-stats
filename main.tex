@@ -173,12 +173,12 @@
 \newcommand{\empfreq}{\widehat{f}}
 \newcommand{\thetapi}{\widehat{\theta_\pi}}
 \newcommand{\watterson}{\widehat{\theta_\text{W}}}
-\newcommand{\fst}{F\textsubscript{ST}}
-\newcommand{\mathfst}{F_\text{ST}}
-\newcommand{\neifst}{F_\text{ST}^\text{Nei}}
-\newcommand{\hudsonfst}{F_\text{ST}^\text{Hudson}}
-\newcommand{\neiestimator}{\widehat{F}_\text{ST}^\text{Nei}}
-\newcommand{\hudsonestimator}{\widehat{F}_\text{ST}^\text{Hudson}}
+\newcommand{\fst}{\textit{F}\textsubscript{ST}}
+\newcommand{\mathfst}{\text{\textit{F}}_\text{ST}}
+\newcommand{\neifst}{\text{\textit{F}}_\text{ST}^\text{Nei}}
+\newcommand{\hudsonfst}{\text{\textit{F}}_\text{ST}^\text{Hudson}}
+\newcommand{\neiestimator}{\widehat{\text{\textit{F}}}_\text{ST}^\text{Nei}}
+\newcommand{\hudsonestimator}{\widehat{\text{\textit{F}}}_\text{ST}^\text{Hudson}}
 \newcommand{\eg}{e.\,g.,~}
 \newcommand{\ie}{i.\,e.,~}
 
@@ -287,7 +287,7 @@ and \href{mailto:moisesexpositoalonso@gmail.com}{\color{black}{moisesexpositoalo
 \fbox{%
   \parbox{48em}{
         \large
-        \textbf{Version: 2024-06-07}
+        \textbf{Version: 2024-07-23}
         \\ \\
         The latest version of this document can be found at %\\
         \url{https://github.com/lczech/pool-seq-pop-gen-stats}
@@ -1238,24 +1238,24 @@ See also \citeay{Hivert2018} for an assessment of \fst{} in the pool-sequencing 
 % \subsection{What the actual \texorpdfstring{F\textsubscript{(ST)}}{F(ST)}?}
 \label{supp:sec:FST:sub:Definition}
 
-There are several non-equivalent \emph{definitions} of $\text{F}_\text{ST}$.
+There are several non-equivalent \emph{definitions} of $\text{\textit{F}}_\text{ST}$.
 The overall goal is to measure some degree of differentiation between two populations, which can be represented as a proportion of variation that cannot be explained by variation within populations.
 What is unclear is a proportion of \emph{what} variation?
-There are two natural candidates leading to two related, but distinct definitions of $\text{F}_\text{ST}$.
-The first definition, which we will call $\text{F}_\text{ST}^\text{Nei}$ following \citeay{Nei1973}, considers the proportion of the total variation in the two populations.
+There are two natural candidates leading to two related, but distinct definitions of $\text{\textit{F}}_\text{ST}$.
+The first definition, which we will call $\text{\textit{F}}_\text{ST}^\text{Nei}$ following \citeay{Nei1973}, considers the proportion of the total variation in the two populations.
 This statistic is also called $\text{G}_\text{ST}$, see for example Equation (5.5) of \citeay{Hahn2018}.
-The second definition, which we will call $\text{F}_\text{ST}^\text{Hudson}$ following \citeay{Hudson1992}, considers the proportion of the variation between populations, see also \citeay{Cockerham1969} and \citeay{Weir2002}.
+The second definition, which we will call $\text{\textit{F}}_\text{ST}^\text{Hudson}$ following \citeay{Hudson1992}, considers the proportion of the variation between populations, see also \citeay{Cockerham1969} and \citeay{Weir2002}.
 This second definition is also considered in \citeay{Karlsson2007}, which we examine below in \secref{supp:sec:FST:sub:Karlsson}.
 
 To make this more formal, we can consider the probability that two haploids carry different alleles.
 We could consider drawing the two haploids from the same population (with the population chosen at random), which we call $\pi_\text{within}$; or we could consider drawing the two haploids from \emph{different} populations, which we call $\pi_\text{between}$; or finally we could consider drawing the two haploids totally at random from either population (potentially the same populations, potentially different populations) which we call $\pi_\text{total}$.
 See \citeay{Bhatia2013} for more background information on this.
 
-Our two definitions of $\text{F}_\text{ST}$ are then
+Our two definitions of $\text{\textit{F}}_\text{ST}$ are then
 
 \begin{align}
-    \text{F}_\text{ST}^\text{Nei}    &:= 1 - \frac{\pi_\text{within}}{\pi_\text{total}} \label{eq:popnei}\\
-    \text{F}_\text{ST}^\text{Hudson} &:= 1 - \frac{\pi_\text{within}}{\pi_\text{between}} \label{eq:pophudson}
+    \text{\textit{F}}_\text{ST}^\text{Nei}    &:= 1 - \frac{\pi_\text{within}}{\pi_\text{total}} \label{eq:popnei}\\
+    \text{\textit{F}}_\text{ST}^\text{Hudson} &:= 1 - \frac{\pi_\text{within}}{\pi_\text{between}} \label{eq:pophudson}
 \end{align}
 
 If we consider a single locus with up $4$ alleles, with frequencies $f_{\tau(p)}$ (possibly zero) with  $\tau$ denoting the allele with $\tau \in \left\{A, C, G, T\right\}$ and $p$ denoting the population with subscripts $1$ and $2$, we can calculate the various $\pi$s as follows
@@ -1278,7 +1278,7 @@ which are then used in our above definitions of \fst.
 \subsection{Unbiased estimators of the \texorpdfstring{$\pi$s}{pi's}}
 \label{supp:sec:FST:sub:EstimatorsPi}
 
-Since both definitions of $\text{F}_\text{ST}$ rely on these $\pi$s, we will need to derive unbiased estimates for them.
+Since both definitions of $\text{\textit{F}}_\text{ST}$ rely on these $\pi$s, we will need to derive unbiased estimates for them.
 We will show below that the following are unbiased estimators of the corresponding quantities without hats:
 
 \begin{align}
@@ -1367,14 +1367,14 @@ In summary, when considering two entities at a time from the same pool/populatio
 %          Estimating FST
 % ------------------------------------------------------------------------------------------------------
 
-\subsection{Final asymptotically unbiased estimators of \texorpdfstring{$\text{F}_\text{ST}$}{FST} per SNP and per window}
+\subsection{Final asymptotically unbiased estimators of \texorpdfstring{$\text{\textit{F}}_\text{ST}$}{FST} per SNP and per window}
 \label{supp:sec:FST:sub:EstimatorFST}
 
-These estimators then immediately suggest the following ratio estimators for the different definitions of $\text{F}_\text{ST}$:
+These estimators then immediately suggest the following ratio estimators for the different definitions of $\text{\textit{F}}_\text{ST}$:
 
 \begin{align}
-    \widehat{\text{F}}_\text{ST}^\text{Nei} &:= 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}\\
-    \widehat{\text{F}}_\text{ST}^\text{Hudson} &:= 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{between}}
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Nei} &:= 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{total}}\\
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Hudson} &:= 1 - \frac{\widehat{\pi}_\text{within}}{\widehat{\pi}_\text{between}}
 \end{align}
 
 All of this has been for a single site, but we are often interested in combining information across SNPs within a window $W$ (or possibly genome wide).
@@ -1383,8 +1383,8 @@ Define $\widehat{\pi}^\ell_\text{between}$ and $\widehat{\pi}^\ell_\text{total}$
 We then combine information across the SNPs in the window $W$ as
 
 \begin{align}
-    \widehat{\text{F}}_\text{ST}^\text{Nei}    &= 1 - \frac{\sum_{\ell \in W} \widehat{\pi}^\ell_\text{within}} {\sum_{\ell \in W} \widehat{\pi}^\ell_\text{total}} \\
-    \widehat{\text{F}}_\text{ST}^\text{Hudson} &= 1 - \frac{\sum_{\ell \in W} \widehat{\pi}^\ell_\text{within}} {\sum_{\ell \in W} \widehat{\pi}^\ell_\text{between}}
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Nei}    &= 1 - \frac{\sum_{\ell \in W} \widehat{\pi}^\ell_\text{within}} {\sum_{\ell \in W} \widehat{\pi}^\ell_\text{total}} \\
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Hudson} &= 1 - \frac{\sum_{\ell \in W} \widehat{\pi}^\ell_\text{within}} {\sum_{\ell \in W} \widehat{\pi}^\ell_\text{between}}
 \end{align}
 
 See \citeay{Bhatia2013} for a practical and theoretical justification for using this ``ratio of averages'' instead of using an ``average of ratios''.
@@ -1398,7 +1398,7 @@ In the following, we describe our assessment of the estimators previously implem
 %          PoPoolation2 Estimator of FST
 % ------------------------------------------------------------------------------------------------------
 
-\subsection{Estimator of \texorpdfstring{$\text{F}_\text{ST}$}{FST} as implemented in PoPoolation2}
+\subsection{Estimator of \texorpdfstring{$\text{\textit{F}}_\text{ST}$}{FST} as implemented in PoPoolation2}
 \label{supp:sec:FST:sub:PoPoolation2Estimator}
 
 The implementation in \toolname{PoPoolation2} \cite{Kofler2011b} offers two ways to estimate \fst{}:
@@ -1452,20 +1452,20 @@ Finally, the estimate of \fst is computed as:
 
 \begin{align}
     \label{eq:PoPoolation2FstEst}
-    \widehat{\text{F}}_\text{ST}^\text{Kofler} &= \frac{ \widehat{\pi}_{W(T)}^\text{Kofler} - \frac{1}{2} \left(     \widehat{\pi}_{W(1)}^\text{Kofler} +     \widehat{\pi}_{W(2)}^\text{Kofler}  \right)}{ \widehat{\pi}_{W(T)}^\text{Kofler}}
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Kofler} &= \frac{ \widehat{\pi}_{W(T)}^\text{Kofler} - \frac{1}{2} \left(     \widehat{\pi}_{W(1)}^\text{Kofler} +     \widehat{\pi}_{W(2)}^\text{Kofler}  \right)}{ \widehat{\pi}_{W(T)}^\text{Kofler}}
 \end{align}
 
-Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{total}$.  There are two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator --- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different read depths and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum read depth and the minimum sample size for both.  This again will result in an upward bias for the sample with higher read depth and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{F}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
+Note that following the notation of the previous section, $\frac{1}{2}\left(\widehat{\pi}_{W(1)}^\text{Kofler} + \widehat{\pi}_{W(2)}^\text{Kofler}\right)$ is identical to the windowed version of $\widehat{\pi}_\text{within}$ and hence is unbiased.  Unfortunately, $\widehat{\pi}_{W(T)}^\text{Kofler}$ however is not an unbiased estimator of $\pi_\text{total}$.  There are two main issues.  First, recall that $\pi_\text{total} = \frac{1}{2}\left(\pi_\text{between}  + \pi_\text{within} \right)$.  The naive estimator of $\pi_\text{between}$ turns out to be unbiased as shown in the previous section, but yet in the PoPoolation estimator, there is a Bessel correction acting on the whole estimator --- this effectively biases the contribution of the part estimating $\pi_\text{between}$ upward.  Second, $\pi_\text{within}$ has two components corresponding to the two populations.  Since these have different read depths and different sample sizes, the components estimating each of these have different biases that need to be corrected separately.  Instead, PoPoolation uses the minimum read depth and the minimum sample size for both.  This again will result in an upward bias for the sample with higher read depth and/or larger pool size.  Overall, these two errors can result in substantial upward bias for $\widehat{\pi}_{W(T)}^\text{Kofler}$, which will result in substantial upward bias for $\widehat{\text{\textit{F}}}_\text{ST}^\text{Kofler}$, as we show later.  This was also pointed out by \citeay{Hivert2018}. It is therefore recommended to use the estimator presented in the previous section instead.
 
 % Moi's rendering of the equations. Keeping it here for reference, in case it's later needed.
 
-% We create an unbiased estimator based on $\text{F}_\text{ST}$'s definition based on nucleotide diversity within a sub-population $S$ and across a total set of populations $T$ (see Equation (5.5) of \citeay{Hahn2018}):
+% We create an unbiased estimator based on $\text{\textit{F}}_\text{ST}$'s definition based on nucleotide diversity within a sub-population $S$ and across a total set of populations $T$ (see Equation (5.5) of \citeay{Hahn2018}):
 % \begin{align}
-%     \text{F}_\text{ST} &= \frac{\theta_{\pi,T} - \theta_{\pi,S}}{\theta_{\pi,T}}
+%     \text{\textit{F}}_\text{ST} &= \frac{\theta_{\pi,T} - \theta_{\pi,S}}{\theta_{\pi,T}}
 % \end{align}
 % Since we have already derived unbiased estimators for $\theta_\pi$, given two libraries of DNA sequences from two Pool-seq populations with their corresponding $u$ alternative alleles, $v$ reference alleles, $C$ coverages, and $n$ individuals, we can calculate:
 % \begin{align}
-%   \text{F}_\text{ST} &=
+%   \text{\textit{F}}_\text{ST} &=
 %     \frac{
 %         \theta_\pi(u_1+u_2,v_1+v_2,C_1+C_2,n_1+n_2) -
 %         \frac{1}{2}(
@@ -1493,11 +1493,11 @@ We here call this estimator using the superscript ``Karlsson'', which is again d
 We are here only looking at biallelic SNPs.
 Instead of $\tau$ for the four nucleotides, we hence use $q$ for the frequency of the major (reference) allele and $p$ for the frequency of the minor (alternative) allele.  We will also use $\widehat{q}$ and $\widehat{p}$ as the corresponding empirical estimates of $q$ and $p$ (\ie the number of reads supporting the major or minor allele divided by the read depth).
 
-We start with the definition of $\text{F}_\text{ST}^\text{Karlsson}$ from Karlsson \textit{et al.} for the SNPs in a window $W$:
+We start with the definition of $\text{\textit{F}}_\text{ST}^\text{Karlsson}$ from Karlsson \textit{et al.} for the SNPs in a window $W$:
 
 \begin{align}
     \label{eq:FstK}
-    \text{F}_\text{ST}^\text{Karlsson} &= \frac{\sum_W N_k}{\sum_W D_k}
+    \text{\textit{F}}_\text{ST}^\text{Karlsson} &= \frac{\sum_W N_k}{\sum_W D_k}
 \end{align}
 
 where the the numerator $N_k$ and denominator $D_k$ for a single site $k$ in $W$ are:
@@ -1511,7 +1511,7 @@ where the the numerator $N_k$ and denominator $D_k$ for a single site $k$ in $W$
         &= N_k + p_{(1)} q_{(1)} + p_{(2)} q_{(2)}.
 \end{align}
 
-It is not obvious, but follows from simple algebra that this definition is equivalent to $ \text{F}_\text{ST}^\text{Hudson} $ defined above.
+It is not obvious, but follows from simple algebra that this definition is equivalent to $ \text{\textit{F}}_\text{ST}^\text{Hudson} $ defined above.
 
 These are estimated as follows, using the numerator $\hat{N}_k$ and denominator $\hat{D}_k$ at a single site:
 
@@ -1527,17 +1527,17 @@ These are estimated as follows, using the numerator $\hat{N}_k$ and denominator 
     h_{(2)} &= \frac{\readdepth_{(2)}}{(\readdepth_{(2)}-1)}\widehat{q}_{(2)} \widehat{p}_{(2)}
     \end{align}
 
-And finally, these are used to define estimator $\widehat{\text{F}}_\text{ST}^\text{Karlsson}$ for a window $W$:
+And finally, these are used to define estimator $\widehat{\text{\textit{F}}}_\text{ST}^\text{Karlsson}$ for a window $W$:
 
 \begin{align}
     \label{eq:FstEstK}
-    \widehat{\text{F}}_\text{ST}^\text{Karlsson} &= \frac{\sum_W \widehat{N}_k}{\sum_W \widehat{D}_k}
+    \widehat{\text{\textit{F}}}_\text{ST}^\text{Karlsson} &= \frac{\sum_W \widehat{N}_k}{\sum_W \widehat{D}_k}
 \end{align}
 
 According to Karlsson \textit{et al.}, when the read depths $\readdepth_{(1)}$ and $\readdepth_{(2)}$ (called ``sample sizes'' there) are equal, the estimator reduces to the estimator of \fst{} given by \citeay{Weir2002}.
 Karlsson \textit{et al.} further state that by the Lehmann-Scheff\'{e} theorem \cite[Theorem 4.2.2]{Bickel1977}, it follows that $\widehat{N}_k$ and $\widehat{D}_k$ are uniformly minimum variance unbiased estimators of $N_k$ and $D_k$, respectively, and hence conclude that their estimator \^{F}\textsubscript{ST,K} is also asymptotically unbiased.
 
-This estimator is very similar (after some algebra) to our $\widehat{\text{F}}_\text{ST}^\text{Hudson}$.
+This estimator is very similar (after some algebra) to our $\widehat{\text{\textit{F}}}_\text{ST}^\text{Hudson}$.
 It however assumes the pool size to be infinite, that is, it is missing the corrections for pool size.
 
 % ------------------------------------------------------------------------------------------------------
@@ -1557,7 +1557,7 @@ We here explore their effects via simulations, and further show that our estimat
 \subsubsection*{Simulation Setup}
 \label{supp:sec:FST:sub:Comparison:sub:Simulations}
 
-To test the accuracy of the different estimators of $\text{F}_\text{ST}$ we performed two sets of simulations.  In both sets of simulations we assumed a biallelic mutation model, and a simple model of sequencing.  Our sequencing model assumes that (1)~each position is independent, (2)~the number of reads at a given position is Poisson distributed with the mean of that distribution being the ``Read Depth'' of that simulation, (3)~each read is equally likely to come from any individual in the pool, and (4)~with probability ``Seq Error'' a read shows the opposite allele as the individual it was sampled from, but otherwise matches the individual's allele, and this error process is independent across reads.  Across both sets of simulations, we vary the sequencing error in $\left\{0, 10^{-5}, 10^{-4}, 10^{-3}\right\}$, the number of haploid individuals in the pool in $\left\{10, 100, 1000\right\}$, and the mean sequencing depth in $\left\{10, 100, 1000\right\}$.  In both sets of simulations, we obtain population-level allele frequencies at each site, and then compute the true values of either $\neifst$ or $\hudsonfst$ using \cref{eq:popnei,eq:pophudson,eq:PiDefs:PiWithin,eq:PiDefs:PiTotal,eq:PiDefs:PiBetween}.
+To test the accuracy of the different estimators of $\text{\textit{F}}_\text{ST}$ we performed two sets of simulations.  In both sets of simulations we assumed a biallelic mutation model, and a simple model of sequencing.  Our sequencing model assumes that (1)~each position is independent, (2)~the number of reads at a given position is Poisson distributed with the mean of that distribution being the ``Read Depth'' of that simulation, (3)~each read is equally likely to come from any individual in the pool, and (4)~with probability ``Seq Error'' a read shows the opposite allele as the individual it was sampled from, but otherwise matches the individual's allele, and this error process is independent across reads.  Across both sets of simulations, we vary the sequencing error in $\left\{0, 10^{-5}, 10^{-4}, 10^{-3}\right\}$, the number of haploid individuals in the pool in $\left\{10, 100, 1000\right\}$, and the mean sequencing depth in $\left\{10, 100, 1000\right\}$.  In both sets of simulations, we obtain population-level allele frequencies at each site, and then compute the true values of either $\neifst$ or $\hudsonfst$ using \cref{eq:popnei,eq:pophudson,eq:PiDefs:PiWithin,eq:PiDefs:PiTotal,eq:PiDefs:PiBetween}.
 We here use ``0'' and ``1'' to denote the major and minor allele, respectively.
 
 In the first set of simulations, which we call the ``simple'' simulations, we simulate 1000 sites in two populations.  Let $f_j^{(p)}$ be the frequency of one of the ``1'' allele at position $j$ in population $p$.  To obtain correlated allele frequencies in the two populations we simulated the frequencies as
@@ -1819,7 +1819,7 @@ These alternative approaches however need further assessment and comparison to t
 
 \popoolissue{Lastly, we wanted to note that to us it seems that some equations in the PoPoolation equations document are not actually implemented in the code, and that the code contains compuations that are not in the document. We hence think that those were never intended to go hand in hand, and that hence the equations document is also not part of the official publication, but merely found in the code repository. Is that assessment correct, or are there other reasons for the divergence between the two?}
 
-% The Pool-seq corrected equations for $\text{F}_\text{ST}$ available in the pdf document of PoPoolation's code repository are not implemented, to the best of our knowledge, in \toolname{PoPoolation} nor in \toolname{PoPoolation2} software.
+% The Pool-seq corrected equations for $\text{\textit{F}}_\text{ST}$ available in the pdf document of PoPoolation's code repository are not implemented, to the best of our knowledge, in \toolname{PoPoolation} nor in \toolname{PoPoolation2} software.
 % Here we describe the methods implemented in \toolname{PoPoolation2} code, explain the rationale, and expand on calculation options of our own implementation.
 % See \citeay{Bhatia2013} for a good introduction to the topic and the confusion around \fst.
 
