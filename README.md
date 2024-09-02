@@ -14,6 +14,6 @@ and
 
 > **grenedalf: population genetic statistics for the next generation of pool sequencing.**<br />
 > Lucas Czech, Jeffrey P. Spence, Moisés Expósito-Alonso.<br />
-> Bioinformatics, 2024. doi:[10.1093/bioinformatics/btae508](https://doi.org/10.1093/bioinformatics/btae508))
+> Bioinformatics, 2024. doi:[10.1093/bioinformatics/btae508](https://doi.org/10.1093/bioinformatics/btae508)
 
 For the scripts and tests to evaluate the equations and produce the plots shown in this document, see [grenedalf-paper](https://github.com/lczech/grenedalf-paper).
